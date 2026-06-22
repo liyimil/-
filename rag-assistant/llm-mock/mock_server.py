@@ -73,11 +73,14 @@ def generate_mock_answer(question):
         if m:
             sources.append(m.group(0))
 
-    # 拼装回答
+    # 拼装回答（提取标题和前几句关键内容）
     excerpts = []
     for s in relevant:
         title = re.sub(r'^##\s*\[faq-\d{2}\]\s*', '', s).split('\n')[0]
-        excerpts.append(title)
+        # 提取前 200 字符的内容摘要
+        body_lines = [l.strip() for l in s.split('\n') if l.strip() and not l.strip().startswith('#') and not l.strip().startswith('---')]
+        body_text = ' '.join(body_lines[:5])[:200]
+        excerpts.append(f'{title} — {body_text}')
 
     answer = '\n'.join([
         '基于课程资料，以下是相关 FAQ 条目的摘要：',
