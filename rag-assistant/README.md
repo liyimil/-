@@ -1,66 +1,160 @@
-# RAG 课程助手 — 学生项目
+# RAG 课程助手
 
-> Day1 S3-S8 渐进式构建项目：从零开始搭建一个基于 course-faq.md 的 CLI RAG 问答助手。
+这是一个基于 `data/course-faq.md` 的 CLI RAG 问答助手。用户输入 Day1 训练营相关问题后，程序会检索 FAQ，生成带来源编号的回答；如果问题不在资料范围内，会拒答。
 
-## 项目目标
+## 环境要求
 
-构建一个 CLI 工具，用户输入 Day1 训练营相关问题，系统检索相关 FAQ 条目，拼接 Prompt，调用 LLM 生成带来源引用的回答。
+- Python 3.10 或以上
+- 不需要安装第三方依赖
+- 不需要数据库
+
+检查 Python：
+
+```bash
+python --version
+```
 
 ## 目录结构
 
-```
+```text
 rag-assistant/
 ├── data/
-│   └── course-faq.md       # 知识库（10 条 FAQ，按 [faq-XX] 编号）
+│   └── course-faq.md
+├── docs/
+│   ├── spec.md
+│   ├── design.md
+│   ├── ai-log.md
+│   ├── test-record.md
+│   └── reflection.md
 ├── llm-mock/
-│   ├── mock_server.py      # LLM Mock 服务（API 不可用时的 fallback）
-│   └── README.md           # Mock 使用说明
+│   └── mock_server.py
+├── src/
+│   ├── retrieve.py
+│   ├── answer.py
+│   └── main.py
 ├── tests/
-│   ├── test_basic.py       # 基础测试（文件存在 + 模块加载 + 接口契约）
-│   └── questions.json      # 五类测试问题（正确匹配/跨段落/资料外/混淆/空输入）
-└── README.md               # 本文件
+│   ├── test_basic.py
+│   ├── test_integration.py
+│   └── questions.json
+└── README.md
 ```
 
-> 你需要自己创建 `src/` 和 `docs/` 目录，并从空签名开始逐步实现检索和回答模块。
+## 产物到 6 类标准文件映射
 
-## 学习路径
+| 产物 | 归属文件 | 来源 |
+|------|----------|------|
+| `spec.md` | `docs/spec.md` | S3 |
+| `design.md` | `docs/design.md` | S4 |
+| `tasks.md` | `docs/design.md` 附录，同时保留 `docs/tasks.md` 独立跟踪表 | S5 |
+| `test_integration.py` / `test-record.md` | `docs/test-record.md` | S5/S7 |
+| `ai-log.md` | `docs/ai-log.md` | S1-S8 |
+| `retrieve.py` + `answer.py` + `main.py` | 本 README 的“核心代码引用”章节 | S5-S7 |
+| `reflection.md` | `docs/reflection.md` | S8 |
 
-| 节次 | 做什么 | 产出 |
-|------|--------|------|
-| S3 | 阅读 `data/course-faq.md`，写 Spec | `docs/spec.md` |
-| S4 | 创建项目目录骨架，写 README + CLAUDE.md | 目录结构 + README |
-| S5 | 定义接口契约 `retrieve()` + `answer()`，写 main.py 骨架 | `src/` 下三个文件（S5 空签名版本） |
-| S6 | 设计 RAG 数据流，启动 llm-mock 测试 | `docs/design.md` |
-| S7 | 实现检索和回答模块，跑通全部测试 | `src/` 完整实现 |
-| S8 | 提交前检查，复盘反思 | 完整提交包 |
+## 核心代码引用
 
-## 快速开始
+| 文件 | 作用 | 验收关注点 |
+|------|------|------------|
+| `src/retrieve.py` | 加载 FAQ、切片、检索 Top 3 chunks | 是否按 `[faq-XX]` 切片；是否能避免弱关键词误召回 |
+| `src/answer.py` | 处理空输入、超长输入、资料外拒答、来源引用 | 是否拒答资料外问题；是否返回 `{answer, sources}` |
+| `src/main.py` | CLI 入口 | 是否真实加载 `data/course-faq.md`，而不是传空 chunks |
 
-### 启动 LLM Mock（S6 起）
+## 安装
+
+进入项目目录即可运行：
 
 ```bash
-cd llm-mock
-python3 mock_server.py
-# 默认监听 http://localhost:9876
+cd rag-assistant
 ```
 
-### 运行测试（S7 起）
+本项目只使用 Python 标准库，所以不需要执行 `pip install`。
+
+## 运行
+
+资料内问题：
 
 ```bash
-python3 tests/test_basic.py
+python src/main.py "Day1要交什么？"
 ```
 
-### 运行 RAG 助手（S7 完成后）
+预期结果：
+
+- 输出包含 `spec`、`design`、`ai-log`、`证据` 等 Day1 交付内容。
+- 输出包含来源编号，例如 `[faq-02]`。
+
+资料外问题：
 
 ```bash
-python3 src/main.py "Day1要交什么？"
-python3 src/main.py "奖学金政策？"   # 应拒答
+python src/main.py "奖学金政策是什么？"
 ```
+
+预期结果：
+
+```text
+资料中没有找到依据。本助手仅能回答 Day1 AI Native 训练营相关问题。
+```
+
+空输入：
+
+```bash
+python src/main.py ""
+```
+
+预期结果：
+
+```text
+请输入您的问题
+```
+
+## 测试
+
+运行基础测试：
+
+```bash
+python tests/test_basic.py
+```
+
+预期结果：
+
+```text
+结果: 9 通过, 0 失败
+```
+
+运行集成测试：
+
+```bash
+python tests/test_integration.py
+```
+
+预期结果：
+
+```text
+结果: 10 通过, 0 失败
+```
+
+Windows 终端如果出现 emoji 编码问题，可以先设置：
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+python tests/test_basic.py
+python tests/test_integration.py
+```
+
+## 可复现检查顺序
+
+助教或同桌可以按这个顺序复现：
+
+1. `cd rag-assistant`
+2. `python --version`
+3. `python tests/test_basic.py`
+4. `python tests/test_integration.py`
+5. `python src/main.py "Day1要交什么？"`
+6. `python src/main.py "奖学金政策是什么？"`
+7. 对照 `docs/test-record.md` 查看输入、预期、实际是否一致
 
 ## 约束
 
-- CLI 工具，不支持 Web UI
-- 不引入数据库或外部存储
-- 仅基于 `course-faq.md` 回答问题
-- 资料外问题必须拒答，不能编造
-- 回答必须注明来源 `[faq-XX]`
+- 只做 CLI，不做 Web UI。
+- 只使用 `data/course-faq.md`，不引入数据库。
+- 资料外问题必须拒答。
+- 回答必须包含来源编号 `[faq-XX]`。

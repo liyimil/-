@@ -1,10 +1,10 @@
 # Day1 AI Native 训练营 — 学生材料包
 
-> Day1 全部学习材料和练习工程。按 S1→S8 顺序使用。
+> Day1 全部学习材料和练习工程。按 S1 → S8 顺序使用。
 
 ## 目录结构
 
-```
+```text
 day1-demo-students/
 ├── s1/                        # S1：提交包评审练习（三份样例）
 │   ├── only-code/             # BLOCKED — 只有代码
@@ -18,9 +18,11 @@ day1-demo-students/
 │   └── README.md              # 任务指引
 ├── rag-assistant/             # S3-S8：RAG 课程助手项目
 │   ├── data/course-faq.md     # FAQ 知识库（10 条）
-│   ├── llm-mock/              # LLM Mock 服务（S6 起使用）
-│   ├── tests/                 # 测试文件（S7 起使用）
-│   └── README.md              # 项目说明 + 学习路径
+│   ├── docs/                  # 6 类标准证据文件
+│   ├── llm-mock/              # LLM Mock 服务
+│   ├── src/                   # retrieve / answer / main 核心代码
+│   ├── tests/                 # 基础测试、集成测试、问题集
+│   └── README.md              # RAG 项目复现说明
 ├── templates/                 # 全天通用模板
 │   ├── ai-log-template.md
 │   ├── spec-template.md
@@ -53,39 +55,61 @@ day1-demo-students/
 
 ### S2 框架微练习 — Bug 修复
 
-1. 运行 `cd s2 && python3 test.py`，观察失败的测试
-2. 定位 `src/task_manager.py` 中的 Bug
-3. 最小修复（每个 Bug ≤ 5 行）
-4. 填写 `docs/` 下的 6 个证据文件
-5. 再次运行 `python3 test.py`，确认全部通过
+1. 运行 `cd s2 && python test.py`，观察失败的测试。
+2. 定位 `src/task_manager.py` 中的 Bug。
+3. 最小修复（每个 Bug 不超过 5 行）。
+4. 填写 `docs/` 下的 6 个证据文件。
+5. 再次运行 `python test.py`，确认全部通过。
 
 详细任务说明见 `s2/README.md`。
 
 ### S3 AI Native 角色觉醒
 
-阅读 `rag-assistant/data/course-faq.md`，用 `templates/spec-template.md` 写 `docs/spec.md`。
+阅读 `rag-assistant/data/course-faq.md`，用 `templates/spec-template.md` 写 `rag-assistant/docs/spec.md`。
 
 ### S4 工具链最小闭环
 
-创建项目目录骨架，写 README 和 CLAUDE.md。
+创建项目目录骨架，写 README 和项目上下文说明。
 
 ### S5 Live Coding
 
-定义接口契约 `retrieve()` + `answer()`，写 main.py 骨架。用 `templates/tasks-template.md` 拆任务。
+定义接口契约 `retrieve()` + `answer()`，写 `main.py` 骨架。用 `templates/tasks-template.md` 拆任务。
 
 ### S6 RAG 主链路
 
-设计 RAG 数据流，启动 `rag-assistant/llm-mock/mock_server.py` 测试。用 `templates/design-template.md` 写 `docs/design.md`。
+设计 RAG 数据流，启动 `rag-assistant/llm-mock/mock_server.py` 测试。用 `templates/design-template.md` 写 `rag-assistant/docs/design.md`。
 
 ### S7 构建 RAG AI 助手
 
-实现检索和回答模块，运行 `python3 rag-assistant/tests/test_basic.py` 确认全部通过。
+实现检索和回答模块，运行测试确认全部通过：
+
+```bash
+cd rag-assistant
+python tests/test_basic.py
+python tests/test_integration.py
+```
+
+当前 RAG 项目验证结果：
+
+- `test_basic.py`：9 通过，0 失败
+- `test_integration.py`：10 通过，0 失败
 
 ### S8 提交、复盘与能力画像
 
-1. 运行 `bash check-submission.sh <你的提交目录>` 检查产物完整性
-2. 用 `templates/reflection-template.md` 写复盘
-3. 对照五维能力画像自评
+1. 运行 `bash check-submission.sh <你的提交目录>` 检查产物完整性。
+2. 用 `templates/reflection-template.md` 写复盘。
+3. 对照五维能力画像自评，并在 `reflection.md` 中引用具体文件作为证据。
+
+## RAG 项目 6 类标准文件映射
+
+| 标准文件 | 当前路径 | 说明 |
+|----------|----------|------|
+| `spec.md` | `rag-assistant/docs/spec.md` | 目标、非目标、验收标准、边界条件 |
+| `design.md` | `rag-assistant/docs/design.md` | RAG 数据流、接口设计、拒答规则、任务拆解附录 |
+| `test-record.md` | `rag-assistant/docs/test-record.md` | 测试输入、预期、实际结果 |
+| `README.md` | `rag-assistant/README.md` | 安装、运行、测试、复现说明 |
+| `ai-log.md` | `rag-assistant/docs/ai-log.md` | AI 协作决策记录，含人工判断 |
+| `reflection.md` | `rag-assistant/docs/reflection.md` | 复盘与五维能力画像自评 |
 
 ## 关键路径速查
 
@@ -95,5 +119,7 @@ day1-demo-students/
 | 全部模板 | `templates/` |
 | 提交检查脚本 | `check-submission.sh` |
 | LLM Mock 服务 | `rag-assistant/llm-mock/mock_server.py` |
-| RAG 测试 | `rag-assistant/tests/test_basic.py` |
+| RAG 基础测试 | `rag-assistant/tests/test_basic.py` |
+| RAG 集成测试 | `rag-assistant/tests/test_integration.py` |
 | 测试问题集 | `rag-assistant/tests/questions.json` |
+| RAG 复现说明 | `rag-assistant/README.md` |

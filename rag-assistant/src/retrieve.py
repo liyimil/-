@@ -1,7 +1,25 @@
 import re
 
 
-STOPWORDS = {'什么', '是什么', '是什', '是', '的', '有', '和', '与', '或', '在', '了', '吗', '呢', '吧', '啊', '呀', '嘛', '哦', '哈', '么', '这', '那', '我', '你', '他', '她', '它', '们', '个', '中', '上', '下', '左', '右', '前', '后', '里', '外', '大', '小', '多', '少', '高', '低', '长', '短', '快', '慢', '好', '坏', '新', '旧', '来', '去', '出', '入', '开', '关', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '百', '千', '万', '亿', '第', '初', '末', '每', '各', '某', '该', '此', '彼', '其', '之', '乎', '也', '矣', '焉', '哉', '兮', '耳', '而', '何', '故', '乃', '则', '遂', '却', '但', '然', '虽', '纵', '即', '若', '苟', '倘', '使', '令', '让', '被', '把', '将', '以', '为', '所', '于', '及', '暨', '且', '又', '再', '亦', '仍', '尚', '犹', '已', '既', '曾', '尝', '方', '才', '正', '着', '过', '地', '得', '怎样', '怎么', '如何', '什么样', '哪些', '哪个', '谁', '几', '多少', '为什么', '干嘛', '何', '哪些', '怎么样', '有什么', '有什么关', '什么关', '什么关系', '关系', '今天', '明天', '昨天', '中午', '晚上', '早上', '下午', '上午', '晚上', '夜里', '半夜', '凌晨', '傍晚', '黄昏', '午后', '午间', '晚间', '早晨', '清晨', '上午', '下午', '夜里', '半夜', '凌晨', '傍晚', '黄昏', '午后', '午间', '晚间', '早晨', '清晨'}
+DOMAIN_TERMS = [
+    'day1', 'rag', 'faq', 'cli', 'spec', 'design', 'ai-log', 'test-record',
+    'readme', 'reflection', 'prompt', 'web ui', 'pdf', 'mysql',
+    '可复核', '交付', '提交', '证据', '助教', '独立判断', '训练营',
+    '目标', '非目标', '过度设计', '数据库', '用户登录', '来源引用',
+    '目的', '输入', '建议', '人工判断', '验证', '五字段',
+    '工具链', '检查', '切片', '检索', '关键词', '拒答',
+    '资料源', '资料外', '上下文', '能力画像', '修复', '复现',
+    '定位', '假设', '最小修复', '目录', '文档', '6类', '六类',
+]
+
+ALIASES = [
+    (('要交', '交什么', '交啥', '提交什么'), ['提交', '交付', '证据', '6类', 'spec', 'design', 'ai-log']),
+    (('五字段', '五个字段'), ['目的', '输入', '建议', '人工判断', '验证']),
+    (('证据包',), ['证据', '交付', '提交']),
+    (('过度设计',), ['过度设计', '数据库', 'web ui', '用户登录']),
+    (('非目标',), ['非目标', '过度设计']),
+    (('工具链',), ['工具链', '提交', '检查']),
+]
 
 
 def load_chunks(faq_path: str) -> list:
@@ -22,15 +40,16 @@ def load_chunks(faq_path: str) -> list:
 
 def extract_keywords(text: str) -> set:
     text_lower = text.lower()
-    keywords = set()
-    keywords.update(re.findall(r'[a-z]+', text_lower))
-    chinese_chars = re.findall(r'[\u4e00-\u9fff]', text_lower)
-    for i in range(len(chinese_chars)):
-        for n in [2, 3, 4]:
-            if i + n <= len(chinese_chars):
-                keyword = ''.join(chinese_chars[i:i+n])
-                if keyword not in STOPWORDS:
-                    keywords.add(keyword)
+    keywords = set(re.findall(r'[a-z][a-z0-9-]*', text_lower))
+
+    for term in DOMAIN_TERMS:
+        if term.lower() in text_lower:
+            keywords.add(term.lower())
+
+    for triggers, aliases in ALIASES:
+        if any(trigger.lower() in text_lower for trigger in triggers):
+            keywords.update(alias.lower() for alias in aliases)
+
     return keywords
 
 
@@ -42,16 +61,20 @@ def retrieve(question: str, chunks: list) -> list:
     if not question_keywords:
         return []
 
-    # 提高匹配阈值，过滤掉误匹配
-    MIN_SCORE = 3
-
     scored_chunks = []
-    for chunk in chunks:
+    for index, chunk in enumerate(chunks):
         chunk_keywords = extract_keywords(chunk['text'])
         matched = question_keywords & chunk_keywords
-        if len(matched) >= MIN_SCORE:
-            score = len(matched)
-            scored_chunks.append((score, chunk, matched))
+        if not matched:
+            continue
 
-    scored_chunks.sort(key=lambda x: x[0], reverse=True)
-    return [chunk for _, chunk, _ in scored_chunks[:3]]
+        # Prefer chunks that match more of the user's specific course terms.
+        score = len(matched) * 10
+        title = chunk['text'].splitlines()[0].lower()
+        score += sum(25 for term in matched if term in title)
+        if chunk['id'] in chunk['text'][:20]:
+            score += 1
+        scored_chunks.append((score, -index, chunk))
+
+    scored_chunks.sort(reverse=True)
+    return [chunk for _, _, chunk in scored_chunks[:3]]

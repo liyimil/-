@@ -3,7 +3,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from retrieve import retrieve
+from retrieve import load_chunks
 from answer import answer
 
 
@@ -13,7 +13,8 @@ def main():
         return
 
     question = sys.argv[1]
-    chunks = []  # TODO: 加载 course-faq.md 并切片
+    faq_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'course-faq.md')
+    chunks = load_chunks(faq_path)
     result = answer(question, chunks)
     print(result["answer"])
 
