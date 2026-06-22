@@ -1,0 +1,72 @@
+[
+  {
+    "category": "正确匹配",
+    "question": "Day1要交什么？",
+    "expected_type": "answer_with_source",
+    "expected_keywords": ["spec", "design", "ai-log", "6类", "证据"],
+    "expected_source": "[faq-02]"
+  },
+  {
+    "category": "正确匹配",
+    "question": "什么是可复核交付？",
+    "expected_type": "answer_with_source",
+    "expected_keywords": ["可复核", "助教", "独立判断", "证据"],
+    "expected_source": "[faq-01]"
+  },
+  {
+    "category": "正确匹配",
+    "question": "ai-log的五字段是什么？",
+    "expected_type": "answer_with_source",
+    "expected_keywords": ["目的", "输入", "建议", "人工判断", "验证"],
+    "expected_source": "[faq-03]"
+  },
+  {
+    "category": "跨段落",
+    "question": "Spec中的非目标和AI过度设计有什么关系？",
+    "expected_type": "answer_with_source",
+    "expected_keywords": ["非目标", "过度设计", "数据库", "Web UI"],
+    "expected_sources": ["[faq-04]", "[faq-10]"]
+  },
+  {
+    "category": "跨段落",
+    "question": "证据包和工具链有什么关系？",
+    "expected_type": "answer_with_source",
+    "expected_keywords": ["证据", "工具链", "提交", "检查"],
+    "expected_sources": ["[faq-02]", "[faq-06]"]
+  },
+  {
+    "category": "资料外",
+    "question": "奖学金政策是什么？",
+    "expected_type": "refuse",
+    "expected_keywords": ["资料中没有找到依据"],
+    "expected_source": null
+  },
+  {
+    "category": "资料外",
+    "question": "今天中午吃什么？",
+    "expected_type": "refuse",
+    "expected_keywords": ["资料中没有找到依据"],
+    "expected_source": null
+  },
+  {
+    "category": "混淆",
+    "question": "说一个Day1没有教的内容",
+    "expected_type": "refuse_or_handle",
+    "expected_keywords": ["资料中没有找到依据"],
+    "expected_source": null
+  },
+  {
+    "category": "混淆",
+    "question": "RAG除了关键词检索还有什么检索方式？",
+    "expected_type": "refuse_or_handle",
+    "expected_keywords": ["资料中没有找到依据"],
+    "expected_source": null
+  },
+  {
+    "category": "空输入",
+    "question": "",
+    "expected_type": "prompt_input",
+    "expected_keywords": ["请输入您的问题"],
+    "expected_source": null
+  }
+]
