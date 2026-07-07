@@ -75,8 +75,8 @@ docs/                 项目文档
 
 ## 推荐阅读顺序
 
-1. `docs/04_组长协作流程.md`
-2. `docs/03_课题分工与接口规范.md`
-3. `contracts/module_contracts.md`
-4. `skills/event_rules/EVENT_LINE_FAULT.md`
-
+1. `docs/01_项目调研文档_SKILL告警分析.md`
+2. `docs/02_项目实施计划_SKILL告警分析.md`
+3. `docs/03_课题分工与接口规范.md`
+4. `contracts/module_contracts.md`
+5. `skills/event_rules/EVENT_LINE_FAULT.md`
