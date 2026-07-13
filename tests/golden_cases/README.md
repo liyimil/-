@@ -5,8 +5,7 @@
 建议先维护一个最小案例：
 
 ```text
-CASE_001_LINE_FAULT
+CASE_001_RULE_0005_EXPRESSION_PARSE
 ```
 
 所有模块先围绕这个案例跑通主链路。
-

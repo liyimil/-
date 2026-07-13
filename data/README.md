@@ -5,10 +5,18 @@
 ## 子目录
 
 ```text
-samples/    手工样例、脱敏样本说明
+samples/    真实样例、脱敏样本说明
 generated/  模拟数据生成器输出
 labels/     标准答案、事件标注
 ```
 
-当前阶段不放真实企业数据。真实样本如需加入仓库，必须先确认已脱敏并获得许可。
+当前已有样例数据位于：
 
+```text
+data/samples/samples-md/
+  alarms.json
+  features.json
+  rules.json
+```
+
+如后续加入更多企业数据，必须先确认已脱敏并获得许可。

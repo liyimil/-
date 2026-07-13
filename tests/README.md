@@ -5,15 +5,15 @@
 第一阶段测试目标：
 
 ```text
-同一设备 LINE_01 在 8 秒内出现：
-CURRENT_OVER_LIMIT
-PROTECTION_ACTION
-BREAKER_TRIP
+输入：
+data/samples/samples-md/alarms.json
+data/samples/samples-md/features.json
+data/samples/samples-md/rules.json
 
 期望：
-触发 EVENT_LINE_FAULT
-生成线路故障事件
-事件等级为高
-推送优先级为优先推送
+能够读取真实样例数据；
+能够解析 ALM-004 这类 signal_name；
+能够加载 RULE_0005_LINE_FAULT_REMOTE_CLOSE；
+能够解析 rule_id=5 的表达式：
+(@1|@2)&@3&(@4|@5|@6)
 ```
-

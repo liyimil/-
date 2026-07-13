@@ -1,39 +1,74 @@
-# SKILL: 规则名称
+# SKILL 模板
+
+当前系统建议使用两类 SKILL：Feature SKILL 和 Rule SKILL。
+
+## Feature SKILL 模板
+
+````markdown
+# FEATURE SKILL: 特征名称
 
 ## metadata
 
 - skill_id:
-- type: event_rule
-- domain: power_grid_alarm
+- source_feature_id:
+- type: feature
+- scope:
+- valid_time:
 - priority:
-- related_alarm_codes:
-  -
 
-## description
+## source
 
-说明该 SKILL 用于识别什么告警模式或事件类型。
-
-## trigger_conditions
-
-- 时间窗口：
-- 设备约束：
-- 必要告警：
-- 可选告警：
-- 排除条件：
+- source_file: features.json
 
 ## expression
 
 ```text
-A & B & C within Ns on same_device
+@1=1
 ```
 
-## output
+## signal_mappings
 
-- event_type:
-- event_level:
-- push_priority:
+| index | object_type | object_name | signal_feature | feature_desc |
+|---|---|---|---|---|
+| @1 |  |  |  |  |
 
 ## explanation
 
-用自然语言解释为什么这些告警组合会形成该事件，以及该事件为什么需要关注。
+解释该特征代表的业务含义。
+````
 
+## Rule SKILL 模板
+
+````markdown
+# RULE SKILL: 规则名称
+
+## metadata
+
+- skill_id:
+- source_rule_id:
+- type: event_rule
+- event_level:
+- event_type:
+- valid_time:
+- enabled:
+
+## source
+
+- source_file: rules.json
+
+## expression
+
+```text
+(@1|@2)&@3&(@4|@5|@6)
+```
+
+## output_format
+
+```text
+$LINE 线路故障（远方手合）
+```
+
+## explanation
+
+解释该规则触发后表示什么业务事件。
+````
