@@ -51,7 +51,15 @@
       "match_score": 0.76,
       "match_reason": "规则类型为线路故障，表达式结构清晰，适合作为首批验证规则"
     }
-  ]
+  ],
+  "feature_states": {
+    "@1": true,
+    "@2": false,
+    "@3": true,
+    "@4": true,
+    "@5": false,
+    "@6": false
+  }
 }
 ```
 
@@ -101,5 +109,5 @@
 - 新字段可以追加，但不要删除已有字段。
 - 原始字段必须保留，例如 `raw_signal_name`、`source_rule_id`。
 - 解析字段放入 `parsed`，不要覆盖原始告警。
-- `rules.expression` 中的变量绑定方式确认前，C 模块输出可以先使用模拟变量取值进行表达式验证。
-
+- 老师已确认：`rules.expression` 中的 `@n` 直接对应 `features.json` 中 `feature_id=@n` 的特征。
+- C 模块可基于 B 输出的 `feature_states` 对规则表达式进行求值。

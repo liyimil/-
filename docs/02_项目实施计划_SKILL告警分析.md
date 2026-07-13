@@ -189,7 +189,7 @@ Rule SKILL：
 - 处理英文括号和中文括号。
 - 支持 `valid_time` 时间窗口。
 - 输出命中条件、未命中条件、触发结果。
-- 预留规则变量绑定接口，等待企业确认 `@n` 映射方式。
+- 将 `rules.expression` 中的 `@n` 直接绑定到 `features.json` 中 `feature_id=@n` 的特征。
 
 ### 6.3 第一版优先支持
 
@@ -283,13 +283,45 @@ rule_id: 5
 expression: (@1|@2)&@3&(@4|@5|@6)
 ```
 
-## 10. 待确认问题
+## 10. 已确认与待确认问题
 
-1. `rules.expression` 中的 `@1/@2/@3` 如何映射到 `features.json`？
-2. `features.expression` 中的 `@1=1` 如何映射到 `signal_mappings`？
-3. `valid_time` 的单位是否统一为秒？
-4. `scope` 中的 `同厂站`、`同间隔`、`同20kV主变` 如何计算？
-5. `run_mode: @ULL/` 的业务含义是什么？
-6. `output_format` 中 `$LINE`、`$DEV`、`$TR`、`$BUS` 如何替换？
+### 10.1 已确认
 
-这些问题确认前，系统第一版应先做数据解析、SKILL 封装和表达式语法能力，不强行宣称完整业务判定准确。
+老师已确认：
+
+```text
+rules.expression 中的 @1/@2/@3
+直接对应 features.json 中 feature_id 为 @1/@2/@3 的特征。
+```
+
+例如：
+
+```text
+rule_id=5
+expression=(@1|@2)&@3&(@4|@5|@6)
+```
+
+表示：
+
+```text
+特征 @1 或 @2 触发
+且特征 @3 触发
+且特征 @4/@5/@6 任一触发
+```
+
+### 10.2 待确认
+
+1. `features.expression` 中的 `@1=1` 如何映射到 `signal_mappings`。
+2. `valid_time` 的单位是否统一为秒。
+3. `scope` 中的 `同厂站`、`同间隔`、`同20kV主变` 如何计算。
+4. `run_mode: @ULL/` 的业务含义是什么。
+5. `output_format` 中 `$LINE`、`$DEV`、`$TR`、`$BUS` 如何替换。
+
+在这些问题确认前，第一版可以先完成：
+
+```text
+规则 @n -> 特征 feature_id=@n
+特征 SKILL 加载
+规则表达式解析
+基于 mock feature 状态的规则求值
+```

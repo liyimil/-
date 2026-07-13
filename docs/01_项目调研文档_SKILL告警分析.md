@@ -145,29 +145,34 @@ feature_refs
 
 ## 3. 关键发现
 
-### 3.1 规则表达式中的变量需要确认映射关系
+### 3.1 规则表达式变量已确认直接对应特征
 
-当前 `rules.json` 中的 `feature_refs` 全部为空，而表达式大量使用 `@1/@2/@3`。
+老师已确认：`rules.json` 中 `expression` 里的 `@1`、`@2` 等变量，直接对应 `features.json` 中同名的 `feature_id`。
 
-因此不能简单认为：
-
-```text
-rules.expression 中的 @1 == features.json 中 feature_id 为 @1 的特征
-```
-
-更合理的初步判断是：
+例如 `rule_id=5`：
 
 ```text
-rules.expression 中的 @1/@2/@3 可能是每条规则内部的局部条件编号
+expression: (@1|@2)&@3&(@4|@5|@6)
 ```
 
-后续必须向老师或企业导师确认：
+其含义为：
 
 ```text
-rules.expression 中的 @n 如何绑定到 features.json 或具体告警信号？
+features.@1 或 features.@2 触发
+且 features.@3 触发
+且 features.@4 / features.@5 / features.@6 任一触发
 ```
 
-这是项目能否准确落地的关键问题。
+因此规则到特征的映射链路可以确定为：
+
+```text
+rules.expression.@n
+  -> features.feature_id == @n
+  -> features.signal_mappings
+  -> alarms.signal_name
+```
+
+这意味着 C 模块可以直接把规则表达式中的变量绑定到 B 模块加载的 Feature SKILL，不需要额外规则引用表。
 
 ### 3.2 项目重点不是生成虚构告警 code
 
@@ -235,7 +240,6 @@ Agent 按需加载 SKILL 后，可以读取：
 
 | 风险 | 说明 | 应对 |
 |---|---|---|
-| 规则变量映射不明 | `rules.expression` 的 `@n` 与特征/告警关系未明确 | 优先向企业确认映射规则 |
 | 告警样本较少 | `alarms.json` 只有 16 条 | 基于真实格式做数据扩展 |
 | 信号信息藏在文本中 | `signal_name` 包含时间、厂站、设备、动作 | A 模块先做文本解析 |
 | 表达式存在多种形态 | 包含 `&`、`|`、`!`、括号和 `@1=1` | C 模块分阶段实现语法 |
@@ -249,10 +253,10 @@ Agent 按需加载 SKILL 后，可以读取：
 告警文本解析 + 特征映射 + SKILL 规则管理 + 表达式引擎 + 多 Agent 编排 + 标准事件输出
 ```
 
-其中最关键的前置工作是确认：
+当前已确认的核心映射链路是：
 
 ```text
-告警 -> 特征 -> 规则变量 -> 事件
+告警 signal_name -> 特征 signal_mappings -> 规则 expression -> 标准事件
 ```
 
-这条映射链路。
+后续开发应围绕这条链路推进。
