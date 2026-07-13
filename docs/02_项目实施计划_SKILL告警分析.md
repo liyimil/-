@@ -1,4 +1,4 @@
-# 项目实施计划：基于 AI Agent 的电网告警事件分析系统
+﻿# 项目实施计划：基于 AI Agent 的电网告警事件分析系统
 
 整理日期：2026-07-13  
 当前依据：`data/samples/samples-md` 数据集
@@ -121,13 +121,13 @@ enabled
 
 ```json
 {
-  "alarm_id": "ALM-004",
-  "raw_signal_name": "2023年08月29日 17:09:11 20kV示范变电站 101开关 分闸",
+  "alarm_id": "DEMO-ALM-002",
+  "raw_signal_name": "2026年07月13日 09:00:05 演示变电站 演示开关01 分闸",
   "parsed": {
     "alarm_time": "2023-08-29 17:09:11",
-    "station_name": "20kV示范变电站",
+    "station_name": "演示变电站",
     "voltage_level": "20kV",
-    "object_name": "101开关",
+    "object_name": "演示开关01",
     "action": "分闸"
   },
   "signal_value": 1
@@ -251,7 +251,7 @@ Rule SKILL：
   "event_type": "2-跳闸事件",
   "event_level": "事故",
   "output_text": "线路故障（远方手合）",
-  "matched_alarms": ["ALM-001", "ALM-002"],
+  "matched_alarms": ["DEMO-ALM-001", "DEMO-ALM-002"],
   "matched_features": ["@1", "@3", "@4"],
   "summary": "系统根据规则 [精准]20kV线路故障（远方手合）识别出跳闸事件。"
 }
@@ -274,10 +274,10 @@ StandardEvent
 
 测试应覆盖全量规则加载和多类表达式解析。告警侧可先从真实数据集中选取：
 
-- `ALM-001`：保护 A 网中断动作
-- `ALM-002`：保护 A 网中断动作
-- `ALM-004`：101 开关分闸
-- `ALM-011`：101 开关合闸
+- `DEMO-ALM-001`：保护 A 网中断动作
+- `DEMO-ALM-002`：保护 A 网中断动作
+- `DEMO-ALM-002`：演示开关01分闸
+- `DEMO-ALM-003`：演示开关01合闸
 - `ALM-013`：测控 A 网中断动作
 
 规则侧应加载 `rules.json` 中全部 461 条规则，并统计表达式解析结果。Rule 5 可作为示例：

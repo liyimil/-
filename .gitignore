@@ -4,5 +4,9 @@
 __pycache__/
 *.pyc
 
+data/samples/samples-md/
+data/generated/*.json
+data/labels/*.json
+
 .DS_Store
 Thumbs.db

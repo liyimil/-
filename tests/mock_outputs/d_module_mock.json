@@ -2,9 +2,9 @@
   "dataset_id": "samples-md",
   "task_id": "TASK-MOCK-0001",
   "context": {
-    "LINE": "20kV示范变电站101线路",
-    "BAY": "20kV示范变电站101间隔",
-    "DEV": "101开关",
+    "LINE": "演示变电站一号线路",
+    "BAY": "演示变电站一号间隔",
+    "DEV": "演示开关01",
     "TR": "1号主变",
     "BUS": "20kV I段母线"
   },
@@ -12,44 +12,44 @@
     "dataset_id": "samples-md",
     "alarms": [
       {
-        "alarm_id": "ALM-001",
-        "station_name": "示例厂站",
-        "device_name": "10kV201线路8保护",
+        "alarm_id": "DEMO-ALM-001",
+        "station_name": "演示厂站",
+        "device_name": "一号线路保护",
         "voltage_level": "20kV",
         "signal_value": 1,
-        "raw_signal_name": "2023年08月29日 17:08:38 20kV示范变电站 10kV201线路8保护A网中断 动作(全数据判定)",
+        "raw_signal_name": "2026年07月13日 09:00:01 演示变电站 一号线路保护A网中断 动作",
         "parsed": {
-          "alarm_time": "2023-08-29 17:08:38",
-          "station_name": "20kV示范变电站",
-          "object_name": "10kV201线路8保护",
+          "alarm_time": "2026-07-13 09:00:01",
+          "station_name": "演示变电站",
+          "object_name": "一号线路保护",
           "action": "A网中断"
         }
       },
       {
-        "alarm_id": "ALM-004",
-        "station_name": "示例厂站",
-        "device_name": "101开关",
+        "alarm_id": "DEMO-ALM-002",
+        "station_name": "演示厂站",
+        "device_name": "演示开关01",
         "voltage_level": "20kV",
         "signal_value": 1,
-        "raw_signal_name": "2023年08月29日 17:09:11 20kV示范变电站 101开关 分闸",
+        "raw_signal_name": "2026年07月13日 09:00:05 演示变电站 演示开关01 分闸",
         "parsed": {
-          "alarm_time": "2023-08-29 17:09:11",
-          "station_name": "20kV示范变电站",
-          "object_name": "101开关",
+          "alarm_time": "2026-07-13 09:00:05",
+          "station_name": "演示变电站",
+          "object_name": "演示开关01",
           "action": "分闸"
         }
       },
       {
-        "alarm_id": "ALM-011",
-        "station_name": "示例厂站",
-        "device_name": "101开关",
+        "alarm_id": "DEMO-ALM-003",
+        "station_name": "演示厂站",
+        "device_name": "演示开关01",
         "voltage_level": "20kV",
         "signal_value": 1,
-        "raw_signal_name": "2023年08月29日 17:11:22 20kV示范变电站 101开关 合闸",
+        "raw_signal_name": "2026年07月13日 09:02:10 演示变电站 演示开关01 合闸",
         "parsed": {
-          "alarm_time": "2023-08-29 17:11:22",
-          "station_name": "20kV示范变电站",
-          "object_name": "101开关",
+          "alarm_time": "2026-07-13 09:02:10",
+          "station_name": "演示变电站",
+          "object_name": "演示开关01",
           "action": "合闸"
         }
       }
@@ -101,15 +101,15 @@
         "@4": true,
         "@5": false,
         "@6": false,
-        "_matched_alarms": ["ALM-001"]
+        "_matched_alarms": ["DEMO-ALM-001"]
       },
       "@3": {
         "@1": true,
-        "_matched_alarms": ["ALM-001"]
+        "_matched_alarms": ["DEMO-ALM-001"]
       },
       "@4": {
         "@1": true,
-        "_matched_alarms": ["ALM-004"]
+        "_matched_alarms": ["DEMO-ALM-002"]
       }
     }
   },
@@ -124,9 +124,9 @@
       "@6": false
     },
     "feature_hits": {
-      "@1": ["ALM-001"],
-      "@3": ["ALM-001"],
-      "@4": ["ALM-004"]
+      "@1": ["DEMO-ALM-001"],
+      "@3": ["DEMO-ALM-001"],
+      "@4": ["DEMO-ALM-002"]
     },
     "rule_results": [
       {
@@ -139,7 +139,7 @@
         "event_level": "事故",
         "event_type": "2-跳闸事件",
         "output_format": "$LINE 线路故障（远方手合）",
-        "matched_alarms": ["ALM-001", "ALM-004"],
+        "matched_alarms": ["DEMO-ALM-001", "DEMO-ALM-002"],
         "reason": "特征 @1、@3、@4 为 true，规则表达式整体求值为 true。"
       },
       {

@@ -1,4 +1,4 @@
-# event_generator
+﻿# event_generator
 
 课题 D：标准事件生成模块。
 
@@ -28,7 +28,7 @@
       "event_level": "事故",
       "event_type": "2-跳闸事件",
       "output_format": "$LINE 线路故障（远方手合）",
-      "matched_alarms": ["ALM-001", "ALM-004"]
+      "matched_alarms": ["DEMO-ALM-001", "DEMO-ALM-002"]
     }
   ]
 }
@@ -44,8 +44,8 @@
       "source_rule_id": "5",
       "event_type": "2-跳闸事件",
       "event_level": "事故",
-      "output_text": "20kV示范变电站101线路 线路故障（远方手合）",
-      "matched_alarms": ["ALM-001", "ALM-004"],
+      "output_text": "演示变电站一号线路 线路故障（远方手合）",
+      "matched_alarms": ["DEMO-ALM-001", "DEMO-ALM-002"],
       "matched_features": ["@1", "@3", "@4"]
     }
   ]
