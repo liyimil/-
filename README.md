@@ -70,6 +70,16 @@ tests/                测试说明与规则用例
 docs/                 项目文档
 ```
 
+## 每个人主要修改哪些目录
+
+| 课题 | 主要目录 | 说明 |
+|---|---|---|
+| A | `src/perception_agent/`、`src/alarm_generator/`、`data/generated/` | 解析 `alarms.json` 和 `signal_name`；后续生成扩展告警数据 |
+| B | `src/skill_engine/`、`skills/` | 管理 Feature SKILL / Rule SKILL；匹配 `signal_mappings`，输出 `signal_mapping_states` |
+| C | `src/expression_engine/`、`tests/rule_cases/` | 解析并求值 `feature.expression` 和全量 `rule.expression` |
+| D | `src/orchestrator/`、`src/event_generator/`、`frontend/` | 串联 A/B/C，生成标准事件并做可视化 |
+| 公共 | `contracts/`、`docs/03_课题分工与接口规范.md` | 只有接口变更时再改，改前需要同步全组 |
+
 ## 分工前先看
 
 每个人先看：
