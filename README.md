@@ -23,9 +23,9 @@
 | C | 规则分析与表达式引擎 | 解析 `@n`、`&`、`|`、`!`、括号，输出规则触发结果 |
 | D | 事件生成、调度编排与可视化 | 串联 A/B/C，生成标准事件并展示 |
 
-## 最小主链路
+## 主链路目标
 
-第一阶段先跑通一个最小案例：
+项目目标是直接面向 `rules.json` 中的 461 条规则建立通用处理链路：
 
 ```text
 A 解析 alarms.json 中的 signal_name
@@ -34,20 +34,14 @@ A 解析 alarms.json 中的 signal_name
   -> D 生成标准事件并展示
 ```
 
-示例目标：
+示例规则：
 
 ```text
-输入：
-ALM-004 的 signal_name 为：
-2023年08月29日 17:09:11 20kV示范变电站 101开关 分闸
-
-规则：
 rule_id=5
 expression=(@1|@2)&@3&(@4|@5|@6)
-
-目标：
-完成告警解析、SKILL 加载、表达式求值和标准事件输出。
 ```
+
+该规则仅作为文档示例，不作为唯一处理目标。实现时应按统一接口支持全量规则加载、索引、表达式解析和事件生成。
 
 ## 仓库目录
 
@@ -72,7 +66,7 @@ src/                  后续代码目录，目前只放模块说明
   event_generator/    课题 D：事件生成
 
 frontend/             前端可视化目录
-tests/                测试与 golden cases
+tests/                测试说明与规则用例
 docs/                 项目文档
 ```
 
@@ -88,4 +82,4 @@ docs/                 项目文档
 1. `docs/01_项目调研文档_SKILL告警分析.md`
 2. `docs/02_项目实施计划_SKILL告警分析.md`
 
-第一阶段所有人先围绕 `rule_id=5` 和 `RULE_0005_LINE_FAULT_REMOTE_CLOSE.md` 跑通主链路。
+`skills/event_rules/RULE_0005_LINE_FAULT_REMOTE_CLOSE.md` 仅作为 Rule SKILL 示例。实际实现目标是处理 `rules.json` 中的全量规则。

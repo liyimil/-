@@ -49,7 +49,7 @@
       "rule_name": "[精准]20kV线路故障（远方手合）",
       "skill_path": "skills/event_rules/RULE_0005.md",
       "match_score": 0.76,
-      "match_reason": "规则类型为线路故障，表达式结构清晰，适合作为首批验证规则"
+      "match_reason": "示例规则，可用于验证规则加载格式"
     }
   ],
   "signal_mapping_states": {

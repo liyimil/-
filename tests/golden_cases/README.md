@@ -1,11 +1,14 @@
-# golden_cases
+# rule_cases
 
-用于存放四个模块共同使用的标准测试案例。
+用于存放四个模块共同使用的规则测试案例。
 
-建议先维护一个最小案例：
+建议按表达式形态维护用例，例如：
 
 ```text
-CASE_001_RULE_0005_EXPRESSION_PARSE
+AND_OR_GROUP
+NOT_CONDITION
+SINGLE_FEATURE
+LONG_COMBINATION
 ```
 
-所有模块先围绕这个案例跑通主链路。
+Rule 5 可以作为 `AND_OR_GROUP` 类型的示例，但不作为唯一目标。
