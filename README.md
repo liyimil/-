@@ -18,10 +18,10 @@
 
 | 课题 | 名称 | 主要职责 |
 |---|---|---|
-| A | 告警数据生成与感知预处理 | 导入/生成、清洗、结构化告警数据 |
-| B | SKILL 规则管理与智能匹配 | 管理规则 SKILL，匹配候选规则 |
-| C | 规则分析与表达式引擎 | 解析表达式，判断事件是否触发 |
-| D | 事件生成、调度编排与可视化 | 编排流程，生成事件，展示结果 |
+| A | 告警数据感知与预处理 | 解析 `alarms.json` 和 `signal_name`，输出结构化告警 |
+| B | SKILL 规则管理与智能匹配 | 管理 `features/rules` 的 SKILL，输出候选特征、候选规则和 `feature_states` |
+| C | 规则分析与表达式引擎 | 解析 `@n`、`&`、`|`、`!`、括号，输出规则触发结果 |
+| D | 事件生成、调度编排与可视化 | 串联 A/B/C，生成标准事件并展示 |
 
 ## 最小主链路
 
@@ -76,10 +76,16 @@ tests/                测试与 golden cases
 docs/                 项目文档
 ```
 
-## 推荐阅读顺序
+## 分工前先看
+
+每个人先看：
+
+1. `docs/03_课题分工与接口规范.md`
+2. `contracts/module_contracts.md`
+
+需要背景时再看：
 
 1. `docs/01_项目调研文档_SKILL告警分析.md`
 2. `docs/02_项目实施计划_SKILL告警分析.md`
-3. `docs/03_课题分工与接口规范.md`
-4. `contracts/module_contracts.md`
-5. `skills/event_rules/RULE_0005_LINE_FAULT_REMOTE_CLOSE.md`
+
+第一阶段所有人先围绕 `rule_id=5` 和 `RULE_0005_LINE_FAULT_REMOTE_CLOSE.md` 跑通主链路。
