@@ -12,9 +12,10 @@
 ```text
 导入 alarms/features/rules
   -> 解析告警 signal_name
-  -> 匹配 signal_mappings 形成特征
+  -> 告警与 signal_mappings 运行时语义匹配
+  -> 求值 feature.expression 形成 feature_states
   -> 加载 Feature SKILL / Rule SKILL
-  -> 解析并求值 expression
+  -> 求值 rule.expression
   -> 输出事件类型、等级和格式化结果
   -> 前端展示和报告输出
 ```
@@ -79,7 +80,7 @@ valid_time
 signal_mappings
 ```
 
-`signal_mappings` 是告警到特征的核心映射来源。
+`signal_mappings` 是 feature 内部的信号模式模板。运行时需要将具体告警 `alarm.signal_name` 与这些模板做语义匹配，得到 feature 内部局部变量状态，再由 `feature.expression` 计算该 feature 是否触发。
 
 ### 3.3 rules.json
 
@@ -152,7 +153,7 @@ enabled
 - 设计 Rule SKILL 模板。
 - 将 `features.json` 中的特征定义转为 Feature SKILL。
 - 将 `rules.json` 中的事件规则转为 Rule SKILL。
-- 根据告警文本、对象类型、动作状态、特征名称匹配候选 SKILL。
+- 根据告警文本、对象类型、动作状态与 `signal_mappings` 做运行时语义匹配，输出 `signal_mapping_states`。
 - 输出候选 Feature SKILL / Rule SKILL。
 
 ### 5.3 SKILL 类型
@@ -190,6 +191,9 @@ Rule SKILL：
 - 支持 `valid_time` 时间窗口。
 - 输出命中条件、未命中条件、触发结果。
 - 将 `rules.expression` 中的 `@n` 直接绑定到 `features.json` 中 `feature_id=@n` 的特征。
+- 区分两层变量：`feature.expression` 中的 `@n` 是 feature 内部局部 signal_mapping 索引；`rule.expression` 中的 `@n` 是全局 feature_id。
+- 基于 `signal_mapping_states` 求值 `feature.expression`，得到 `feature_states`。
+- 基于 `feature_states` 求值 `rule.expression`，得到事件规则触发结果。
 
 ### 6.3 第一版优先支持
 
@@ -309,9 +313,21 @@ expression=(@1|@2)&@3&(@4|@5|@6)
 且特征 @4/@5/@6 任一触发
 ```
 
+老师还说明了完整链路：
+
+```text
+alarm 具体告警实例
+  ↑ 运行时语义匹配
+signal_mapping 信号模式模板，定义在 feature 内
+  ↑ @N 局部索引
+feature.expression 特征逻辑表达式
+  ↑ feature_id
+rule.expression 事件判定表达式
+```
+
 ### 10.2 待确认
 
-1. `features.expression` 中的 `@1=1` 如何映射到 `signal_mappings`。
+1. 运行时语义匹配的规则：`alarm.signal_name` 与 `signal_mappings.object_name / signal_feature / feature_desc` 具体按哪些字段匹配。
 2. `valid_time` 的单位是否统一为秒。
 3. `scope` 中的 `同厂站`、`同间隔`、`同20kV主变` 如何计算。
 4. `run_mode: @ULL/` 的业务含义是什么。
@@ -320,8 +336,8 @@ expression=(@1|@2)&@3&(@4|@5|@6)
 在这些问题确认前，第一版可以先完成：
 
 ```text
-规则 @n -> 特征 feature_id=@n
-特征 SKILL 加载
-规则表达式解析
-基于 mock feature 状态的规则求值
+Feature SKILL / Rule SKILL 加载
+feature.expression 与 rule.expression 解析
+基于 mock signal_mapping 状态计算 feature_states
+基于 feature_states 求值 rules.expression
 ```

@@ -32,6 +32,8 @@
 |---|---|---|---|---|
 | @1 |  |  |  |  |
 
+说明：这里的 `@1` 是该 Feature SKILL 内部的局部 signal_mapping 索引。
+
 ## explanation
 
 解释该特征代表的业务含义。
@@ -61,6 +63,8 @@
 ```text
 (@1|@2)&@3&(@4|@5|@6)
 ```
+
+说明：这里的 `@1/@2` 对应 `features.json` 中的 `feature_id=@1/@2`。
 
 ## output_format
 

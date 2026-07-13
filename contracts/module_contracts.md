@@ -52,6 +52,29 @@
       "match_reason": "规则类型为线路故障，表达式结构清晰，适合作为首批验证规则"
     }
   ],
+  "signal_mapping_states": {
+    "@1": {
+      "@1": true,
+      "@2": false,
+      "@3": false,
+      "@4": true,
+      "@5": true,
+      "@6": false
+    },
+    "@2": {
+      "@1": false
+    }
+  }
+}
+```
+
+说明：外层 `@1` 是 `feature_id`，内层 `@1/@2` 是该 feature 内部 `signal_mappings.index`。
+
+## 3. C 输出：表达式求值结果
+
+```json
+{
+  "dataset_id": "samples-md",
   "feature_states": {
     "@1": true,
     "@2": false,
@@ -59,15 +82,7 @@
     "@4": true,
     "@5": false,
     "@6": false
-  }
-}
-```
-
-## 3. C 输出：表达式求值结果
-
-```json
-{
-  "dataset_id": "samples-md",
+  },
   "rule_results": [
     {
       "source_rule_id": "5",
@@ -110,4 +125,5 @@
 - 原始字段必须保留，例如 `raw_signal_name`、`source_rule_id`。
 - 解析字段放入 `parsed`，不要覆盖原始告警。
 - 老师已确认：`rules.expression` 中的 `@n` 直接对应 `features.json` 中 `feature_id=@n` 的特征。
-- C 模块可基于 B 输出的 `feature_states` 对规则表达式进行求值。
+- 老师已确认：`feature.expression` 中的 `@n` 是 feature 内部局部索引，对应该 feature 的 `signal_mappings.index=@n`。
+- C 模块先基于 B 输出的 `signal_mapping_states` 求值 `feature.expression` 得到 `feature_states`，再基于 `feature_states` 求值 `rules.expression`。

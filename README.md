@@ -19,7 +19,7 @@
 | 课题 | 名称 | 主要职责 |
 |---|---|---|
 | A | 告警数据感知与预处理 | 解析 `alarms.json` 和 `signal_name`，输出结构化告警 |
-| B | SKILL 规则管理与智能匹配 | 管理 `features/rules` 的 SKILL，输出候选特征、候选规则和 `feature_states` |
+| B | SKILL 规则管理与智能匹配 | 管理 `features/rules` 的 SKILL，输出候选特征、候选规则和 `signal_mapping_states` |
 | C | 规则分析与表达式引擎 | 解析 `@n`、`&`、`|`、`!`、括号，输出规则触发结果 |
 | D | 事件生成、调度编排与可视化 | 串联 A/B/C，生成标准事件并展示 |
 
@@ -29,8 +29,8 @@
 
 ```text
 A 解析 alarms.json 中的 signal_name
-  -> B 从 features/rules 中加载候选 SKILL
-  -> C 解析 rules.expression 并判断规则触发
+  -> B 用 signal_mappings 匹配告警，输出 signal_mapping_states
+  -> C 求值 feature.expression 和 rule.expression
   -> D 生成标准事件并展示
 ```
 

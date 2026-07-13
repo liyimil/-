@@ -20,7 +20,8 @@ rules.json    事件规则数据
 ```text
 原始告警 signal_name
   -> 告警字段解析
-  -> signal_mappings 匹配形成特征
+  -> 运行时语义匹配 signal_mappings
+  -> feature.expression 计算特征是否触发
   -> rules.expression 规则表达式求值
   -> 输出 event_type / event_level / output_format
   -> Agent 生成可解释事件报告
@@ -80,7 +81,7 @@ priority
 signal_mappings
 ```
 
-其中 `signal_mappings` 描述告警信号如何映射为特征，例如：
+其中 `signal_mappings` 描述特征内部的信号模式模板，例如：
 
 ```text
 object_type: 第一套线路保护
@@ -100,6 +101,8 @@ signal_feature: 10kV线路保护通道全部退出
 ```text
 (@1&@2&@4&@5)|(@3&@6)
 ```
+
+这里要注意：`features.expression` 中的 `@1/@2` 是特征内部的局部索引，对应同一个 feature 内 `signal_mappings.index`。它和 `rules.expression` 中引用 `feature_id` 的 `@1/@2` 不是同一层含义。
 
 ### 2.3 rules.json
 
@@ -166,15 +169,37 @@ features.@1 或 features.@2 触发
 因此规则到特征的映射链路可以确定为：
 
 ```text
-rules.expression.@n
-  -> features.feature_id == @n
-  -> features.signal_mappings
-  -> alarms.signal_name
+rules.expression.@N
+  -> features.feature_id == @N
+  -> feature.expression
+  -> feature.signal_mappings.index == @M
+  -> alarm.signal_name 运行时语义匹配
 ```
 
-这意味着 C 模块可以直接把规则表达式中的变量绑定到 B 模块加载的 Feature SKILL，不需要额外规则引用表。
+这意味着 C 模块可以直接把规则表达式中的变量绑定到 Feature SKILL，不需要额外规则引用表。
 
-### 3.2 项目重点不是生成虚构告警 code
+### 3.2 特征内部也有一层局部表达式
+
+老师进一步说明：
+
+```text
+alarm 具体告警实例
+  ↑ 运行时语义匹配
+signal_mapping 信号模式模板，定义在 feature 内
+  ↑ @N 局部索引
+feature.expression 特征逻辑表达式
+  ↑ feature_id
+rule.expression 事件判定表达式
+```
+
+因此系统中有两类变量：
+
+| 位置 | 含义 | 例子 |
+|---|---|---|
+| `rule.expression` 的 `@1` | 全局特征编号，对应 `features.feature_id=@1` | Rule 5 的 `@1` 对应 Feature `@1` |
+| `feature.expression` 的 `@1` | 特征内部局部信号编号，对应该 feature 的 `signal_mappings.index=@1` | Feature `@2` 的 `@1=1` 对应该特征内部第一条 signal_mapping |
+
+### 3.3 项目重点不是生成虚构告警 code
 
 之前假设的抽象告警 code 只能作为概念说明，不应继续作为主文档里的核心样例。现在要以真实字段为准：
 
@@ -186,7 +211,7 @@ rule_id / rule_name / expression
 event_type / event_level / output_format
 ```
 
-### 3.3 表达式引擎是核心难点
+### 3.4 表达式引擎是核心难点
 
 规则数据表明，第一版表达式引擎至少要支持：
 
@@ -205,10 +230,10 @@ event_type / event_level / output_format
 告警采样数据 alarms.json
   -> 解析 signal_name
   -> 生成结构化告警
-  -> 根据 signal_mappings 匹配特征
+  -> 告警与 signal_mappings 运行时语义匹配，得到 signal_mapping_states
+  -> 求值 feature.expression，得到 feature_states
   -> 加载 feature SKILL / rule SKILL
-  -> 解析 features.expression 和 rules.expression
-  -> 判断规则是否触发
+  -> 求值 rules.expression，判断事件是否触发
   -> 生成标准事件
   -> Agent 生成解释和报告
 ```
@@ -256,7 +281,7 @@ Agent 按需加载 SKILL 后，可以读取：
 当前已确认的核心映射链路是：
 
 ```text
-告警 signal_name -> 特征 signal_mappings -> 规则 expression -> 标准事件
+alarm -> signal_mapping -> feature.expression -> feature_id -> rule.expression -> 标准事件
 ```
 
 后续开发应围绕这条链路推进。
