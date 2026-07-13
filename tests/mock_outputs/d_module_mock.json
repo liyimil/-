@@ -1,0 +1,160 @@
+{
+  "dataset_id": "samples-md",
+  "task_id": "TASK-MOCK-0001",
+  "context": {
+    "LINE": "20kV示范变电站101线路",
+    "BAY": "20kV示范变电站101间隔",
+    "DEV": "101开关",
+    "TR": "1号主变",
+    "BUS": "20kV I段母线"
+  },
+  "structured_alarms": {
+    "dataset_id": "samples-md",
+    "alarms": [
+      {
+        "alarm_id": "ALM-001",
+        "station_name": "示例厂站",
+        "device_name": "10kV201线路8保护",
+        "voltage_level": "20kV",
+        "signal_value": 1,
+        "raw_signal_name": "2023年08月29日 17:08:38 20kV示范变电站 10kV201线路8保护A网中断 动作(全数据判定)",
+        "parsed": {
+          "alarm_time": "2023-08-29 17:08:38",
+          "station_name": "20kV示范变电站",
+          "object_name": "10kV201线路8保护",
+          "action": "A网中断"
+        }
+      },
+      {
+        "alarm_id": "ALM-004",
+        "station_name": "示例厂站",
+        "device_name": "101开关",
+        "voltage_level": "20kV",
+        "signal_value": 1,
+        "raw_signal_name": "2023年08月29日 17:09:11 20kV示范变电站 101开关 分闸",
+        "parsed": {
+          "alarm_time": "2023-08-29 17:09:11",
+          "station_name": "20kV示范变电站",
+          "object_name": "101开关",
+          "action": "分闸"
+        }
+      },
+      {
+        "alarm_id": "ALM-011",
+        "station_name": "示例厂站",
+        "device_name": "101开关",
+        "voltage_level": "20kV",
+        "signal_value": 1,
+        "raw_signal_name": "2023年08月29日 17:11:22 20kV示范变电站 101开关 合闸",
+        "parsed": {
+          "alarm_time": "2023-08-29 17:11:22",
+          "station_name": "20kV示范变电站",
+          "object_name": "101开关",
+          "action": "合闸"
+        }
+      }
+    ]
+  },
+  "skill_match": {
+    "dataset_id": "samples-md",
+    "candidate_feature_skills": [
+      {
+        "skill_id": "FEATURE_001",
+        "source_feature_id": "@1",
+        "feature_name": "10kV线路保护通道全部退出",
+        "skill_path": "skills/features/FEATURE_001.md",
+        "match_score": 0.91,
+        "match_reason": "保护A网中断告警命中特征模板"
+      },
+      {
+        "skill_id": "FEATURE_003",
+        "source_feature_id": "@3",
+        "feature_name": "特征_806",
+        "skill_path": "skills/features/FEATURE_003.md",
+        "match_score": 0.84,
+        "match_reason": "线路保护异常类告警命中特征模板"
+      },
+      {
+        "skill_id": "FEATURE_004",
+        "source_feature_id": "@4",
+        "feature_name": "特征_807",
+        "skill_path": "skills/features/FEATURE_004.md",
+        "match_score": 0.88,
+        "match_reason": "开关分闸动作命中特征模板"
+      }
+    ],
+    "candidate_rule_skills": [
+      {
+        "skill_id": "RULE_0005",
+        "source_rule_id": "5",
+        "rule_name": "[精准]20kV线路故障（远方手合）",
+        "skill_path": "skills/event_rules/RULE_0005_LINE_FAULT_REMOTE_CLOSE.md",
+        "match_score": 0.93,
+        "match_reason": "候选特征满足 rule_id=5 的主要表达式结构"
+      }
+    ],
+    "signal_mapping_states": {
+      "@1": {
+        "@1": true,
+        "@2": false,
+        "@3": false,
+        "@4": true,
+        "@5": false,
+        "@6": false,
+        "_matched_alarms": ["ALM-001"]
+      },
+      "@3": {
+        "@1": true,
+        "_matched_alarms": ["ALM-001"]
+      },
+      "@4": {
+        "@1": true,
+        "_matched_alarms": ["ALM-004"]
+      }
+    }
+  },
+  "expression_result": {
+    "dataset_id": "samples-md",
+    "feature_states": {
+      "@1": true,
+      "@2": false,
+      "@3": true,
+      "@4": true,
+      "@5": false,
+      "@6": false
+    },
+    "feature_hits": {
+      "@1": ["ALM-001"],
+      "@3": ["ALM-001"],
+      "@4": ["ALM-004"]
+    },
+    "rule_results": [
+      {
+        "source_rule_id": "5",
+        "rule_name": "[精准]20kV线路故障（远方手合）",
+        "expression": "(@1|@2)&@3&(@4|@5|@6)",
+        "triggered": true,
+        "matched_variables": ["@1", "@3", "@4"],
+        "unmatched_variables": ["@2", "@5", "@6"],
+        "event_level": "事故",
+        "event_type": "2-跳闸事件",
+        "output_format": "$LINE 线路故障（远方手合）",
+        "matched_alarms": ["ALM-001", "ALM-004"],
+        "reason": "特征 @1、@3、@4 为 true，规则表达式整体求值为 true。"
+      },
+      {
+        "source_rule_id": "902",
+        "rule_name": "[基础]开关合上",
+        "expression": "(@1)",
+        "triggered": false,
+        "matched_variables": [],
+        "unmatched_variables": ["@1"],
+        "event_level": "告知",
+        "event_type": "6-一般告知",
+        "output_format": "$BAY 开关投入运行",
+        "matched_alarms": [],
+        "reason": "当前 C 模块未判定该规则触发，D 模块不生成事件。"
+      }
+    ]
+  }
+}

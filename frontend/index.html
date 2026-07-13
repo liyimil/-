@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>电网告警事件分析看板</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --line: #d8dde6;
+      --text: #1f2933;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --danger: #c2410c;
+      --ok: #15803d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    header {
+      padding: 18px 24px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    main {
+      display: grid;
+      gap: 16px;
+      padding: 16px 24px 28px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .metric,
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .metric {
+      padding: 14px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    section {
+      padding: 16px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: #f8fafc;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .event {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .event-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: var(--accent);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag-danger {
+      background: #fff7ed;
+      color: var(--danger);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .ok {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    .no {
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .metrics,
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      header,
+      main {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>电网告警事件分析看板</h1>
+    <div class="subtitle">课题 D 演示：mock 数据 → event_generator → orchestrator → frontend</div>
+  </header>
+
+  <main>
+    <div class="metrics" id="metrics"></div>
+
+    <section>
+      <h2>标准事件</h2>
+      <div id="events"></div>
+    </section>
+
+    <div class="grid-2">
+      <section>
+        <h2>Agent 编排状态</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>智能体</th>
+              <th>状态</th>
+              <th>输出数</th>
+            </tr>
+          </thead>
+          <tbody id="agentSteps"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>规则判定结果</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>规则</th>
+              <th>表达式</th>
+              <th>触发</th>
+            </tr>
+          </thead>
+          <tbody id="rules"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <section>
+      <h2>告警流</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>告警 ID</th>
+            <th>时间</th>
+            <th>对象</th>
+            <th>动作</th>
+            <th>原始告警</th>
+          </tr>
+        </thead>
+        <tbody id="alarms"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const mockData = {
+      task_id: "TASK-MOCK-0001",
+      dataset_id: "samples-md",
+      inputs: {
+        alarm_count: 3,
+        rule_result_count: 2,
+        triggered_rule_count: 1
+      },
+      event_stats: {
+        event_count: 1,
+        level_stats: { "事故": 1 },
+        type_stats: { "2-跳闸事件": 1 }
+      },
+      frontend_data: {
+        agent_steps: [
+          { agent: "perception_agent", module: "A", status: "mocked", output_count: 3 },
+          { agent: "skill_engine", module: "B", status: "mocked", output_count: 1 },
+          { agent: "expression_engine", module: "C", status: "mocked", output_count: 2 },
+          { agent: "event_generator", module: "D", status: "completed", output_count: 1 }
+        ],
+        events: [
+          {
+            event_id: "EVT-0001",
+            source_rule_id: "5",
+            rule_name: "[精准]20kV线路故障（远方手合）",
+            event_type: "2-跳闸事件",
+            event_level: "事故",
+            output_text: "20kV示范变电站101线路 线路故障（远方手合）",
+            matched_alarms: ["ALM-001", "ALM-004"],
+            matched_features: ["@1", "@3", "@4"],
+            summary: "系统根据规则“[精准]20kV线路故障（远方手合）”识别出2-跳闸事件：20kV示范变电站101线路 线路故障（远方手合）。"
+          }
+        ],
+        rule_results: [
+          {
+            source_rule_id: "5",
+            rule_name: "[精准]20kV线路故障（远方手合）",
+            expression: "(@1|@2)&@3&(@4|@5|@6)",
+            triggered: true
+          },
+          {
+            source_rule_id: "902",
+            rule_name: "[基础]开关合上",
+            expression: "(@1)",
+            triggered: false
+          }
+        ],
+        alarms: [
+          {
+            alarm_id: "ALM-001",
+            raw_signal_name: "2023年08月29日 17:08:38 20kV示范变电站 10kV201线路8保护A网中断 动作(全数据判定)",
+            parsed: { alarm_time: "2023-08-29 17:08:38", object_name: "10kV201线路8保护", action: "A网中断" }
+          },
+          {
+            alarm_id: "ALM-004",
+            raw_signal_name: "2023年08月29日 17:09:11 20kV示范变电站 101开关 分闸",
+            parsed: { alarm_time: "2023-08-29 17:09:11", object_name: "101开关", action: "分闸" }
+          },
+          {
+            alarm_id: "ALM-011",
+            raw_signal_name: "2023年08月29日 17:11:22 20kV示范变电站 101开关 合闸",
+            parsed: { alarm_time: "2023-08-29 17:11:22", object_name: "101开关", action: "合闸" }
+          }
+        ]
+      }
+    };
+
+    function renderMetrics(data) {
+      const metrics = [
+        ["告警数", data.inputs.alarm_count],
+        ["规则判定数", data.inputs.rule_result_count],
+        ["触发事件数", data.event_stats.event_count],
+        ["数据集", data.dataset_id]
+      ];
+
+      document.querySelector("#metrics").innerHTML = metrics.map(([label, value]) => `
+        <div class="metric">
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderEvents(events) {
+      document.querySelector("#events").innerHTML = events.map(event => `
+        <div class="event">
+          <div class="event-title">
+            <span>${event.output_text}</span>
+            <span>
+              <span class="tag tag-danger">${event.event_level}</span>
+              <span class="tag">${event.event_type}</span>
+            </span>
+          </div>
+          <div class="muted">${event.summary}</div>
+          <p>命中告警：${event.matched_alarms.join("，")}</p>
+          <p>命中特征：${event.matched_features.join("，")}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderAgentSteps(steps) {
+      document.querySelector("#agentSteps").innerHTML = steps.map(step => `
+        <tr>
+          <td>${step.module}</td>
+          <td>${step.agent}</td>
+          <td>${step.status}</td>
+          <td>${step.output_count}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderRules(rules) {
+      document.querySelector("#rules").innerHTML = rules.map(rule => `
+        <tr>
+          <td>${rule.source_rule_id}：${rule.rule_name}</td>
+          <td>${rule.expression}</td>
+          <td class="${rule.triggered ? "ok" : "no"}">${rule.triggered ? "是" : "否"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAlarms(alarms) {
+      document.querySelector("#alarms").innerHTML = alarms.map(alarm => `
+        <tr>
+          <td>${alarm.alarm_id}</td>
+          <td>${alarm.parsed.alarm_time}</td>
+          <td>${alarm.parsed.object_name}</td>
+          <td>${alarm.parsed.action}</td>
+          <td>${alarm.raw_signal_name}</td>
+        </tr>
+      `).join("");
+    }
+
+    renderMetrics(mockData);
+    renderEvents(mockData.frontend_data.events);
+    renderAgentSteps(mockData.frontend_data.agent_steps);
+    renderRules(mockData.frontend_data.rule_results);
+    renderAlarms(mockData.frontend_data.alarms);
+  </script>
+</body>
+</html>

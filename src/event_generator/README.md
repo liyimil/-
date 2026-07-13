@@ -2,25 +2,54 @@
 
 课题 D：标准事件生成模块。
 
-职责：
+## 负责范围
 
-- 根据 C 的规则判定结果生成标准事件对象。
-- 生成事件摘要。
-- 输出前端可展示的事件结果。
+- 读取 C 模块输出的 `rule_results`。
+- 只对 `triggered=true` 的规则生成标准事件。
+- 根据 `output_format` 渲染事件文本，例如 `$LINE 线路故障（远方手合）`。
+- 汇总 `matched_alarms`、`matched_features`、事件等级和事件类型，输出给编排层和前端。
 
-主要输入：
+## 当前文件
 
-```text
-rule_results
-rules.json 中的 event_type / event_level / output_format
-matched_alarms
-matched_features
+- `event_generator.py`：事件生成主逻辑。
+- `__init__.py`：导出 `generate_events`。
+
+## 输入
+
+主要来自 C 模块：
+
+```json
+{
+  "rule_results": [
+    {
+      "source_rule_id": "5",
+      "triggered": true,
+      "matched_variables": ["@1", "@3", "@4"],
+      "event_level": "事故",
+      "event_type": "2-跳闸事件",
+      "output_format": "$LINE 线路故障（远方手合）",
+      "matched_alarms": ["ALM-001", "ALM-004"]
+    }
+  ]
+}
 ```
 
-主要输出：
+## 输出
 
-```text
-StandardEvent
+```json
+{
+  "events": [
+    {
+      "event_id": "EVT-0001",
+      "source_rule_id": "5",
+      "event_type": "2-跳闸事件",
+      "event_level": "事故",
+      "output_text": "20kV示范变电站101线路 线路故障（远方手合）",
+      "matched_alarms": ["ALM-001", "ALM-004"],
+      "matched_features": ["@1", "@3", "@4"]
+    }
+  ]
+}
 ```
 
-标准事件格式以 `contracts/module_contracts.md` 为准。
+标准事件字段以 `contracts/module_contracts.md` 为准。
