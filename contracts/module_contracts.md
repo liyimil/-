@@ -1,22 +1,22 @@
 ﻿# A/B/C/D 模块接口契约
 
-本文件用于约定四个课题之间的数据接口。当前接口基于 `data/samples/samples-md` 中的真实样例设计。
+本文件用于约定四个课题之间的数据接口。当前仓库不提交企业样例数据，接口示例统一使用 `DEMO-*` 数据；真实样例仅作为本地理解字段语义的参考。
 
 ## 1. A 输出：结构化告警
 
 ```json
 {
-  "dataset_id": "samples-md",
+  "dataset_id": "demo-dataset",
   "alarms": [
     {
       "alarm_id": "DEMO-ALM-002",
-      "station_name": "示例厂站",
+      "station_name": "演示变电站",
       "device_name": "",
       "voltage_level": "",
       "signal_value": 1,
       "raw_signal_name": "2026年07月13日 09:00:05 演示变电站 演示开关01 分闸",
       "parsed": {
-        "alarm_time": "2023-08-29 17:09:11",
+        "alarm_time": "2026-07-13 09:00:05",
         "station_name": "演示变电站",
         "voltage_level": "20kV",
         "object_name": "演示开关01",
@@ -31,7 +31,7 @@
 
 ```json
 {
-  "dataset_id": "samples-md",
+  "dataset_id": "demo-dataset",
   "candidate_feature_skills": [
     {
       "skill_id": "FEATURE_012",
@@ -74,7 +74,7 @@
 
 ```json
 {
-  "dataset_id": "samples-md",
+  "dataset_id": "demo-dataset",
   "feature_states": {
     "@1": true,
     "@2": false,

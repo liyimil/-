@@ -12,7 +12,7 @@
   -> 前端可视化展示
 ```
 
-当前仓库只搭建项目框架和文档约定，不包含具体实现代码。
+当前仓库已在 `codex/complete-internship-system` 分支提供一条可运行的 DEMO 主链路：A 生成并预处理告警，B 输出 SKILL 匹配结果，C 完成表达式求值，D 生成标准事件并在前端展示。企业样例数据不提交到仓库，演示数据统一使用 `DEMO-*`。
 
 ## 课题分工
 
@@ -47,9 +47,9 @@ expression=(@1|@2)&@3&(@4|@5|@6)
 
 ```text
 data/                 数据目录
-  samples/            真实样例和脱敏样本说明
-  generated/          模拟生成数据
-  labels/             标准答案和标注结果
+  samples/            样例数据本地目录，企业样例不提交
+  generated/          本地生成结果目录，不提交运行产物
+  labels/             本地标注结果目录，不提交运行产物
 
 skills/               SKILL 规则目录
   features/           特征定义 SKILL
@@ -57,7 +57,7 @@ skills/               SKILL 规则目录
 
 contracts/            A/B/C/D 模块接口契约
 
-src/                  后续代码目录，目前只放模块说明
+src/                  A/B/C/D 模块代码目录
   alarm_generator/    课题 A：模拟数据生成
   perception_agent/   课题 A：感知预处理
   skill_engine/       课题 B：SKILL 管理与匹配
@@ -69,6 +69,30 @@ frontend/             前端可视化目录
 tests/                测试说明与规则用例
 docs/                 项目文档
 ```
+
+## 当前可运行链路
+
+```bash
+python src/orchestrator/orchestrator.py --adapter demo
+```
+
+该命令会通过 `DemoQwenPawAdapter` 串联本地 A/B/C/D 模块，并输出标准事件结果。`--adapter mock` 保留给 D 模块单独调试，`--adapter real` 预留给后续真实 QwenPaw 框架接入。
+
+如果本地存在企业样例目录，可在不提交数据的前提下验证全量规则：
+
+```bash
+python src/orchestrator/orchestrator.py --adapter demo --sample-dir data/samples/samples-md
+```
+
+该模式会读取本地 `alarms.json`、`features.json`、`rules.json`，并对 `rules.json` 中的规则批量生成 `rule_results`。
+
+前端入口：
+
+```text
+frontend/index.html
+```
+
+前端包含总览、编排流程、事件中心、规则判定、告警流五个页面。
 
 ## 每个人主要修改哪些目录
 

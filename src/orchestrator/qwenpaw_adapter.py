@@ -1,6 +1,11 @@
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Mapping
 
+from src.alarm_generator import generate_demo_alarms
+from src.expression_engine import evaluate_rules
+from src.perception_agent import preprocess_alarms
+from src.skill_engine import match_skills
+
 from .workflow_config import AgentSpec, WORKFLOW
 
 
@@ -58,6 +63,47 @@ class MockQwenPawAdapter(BaseQwenPawAdapter):
         )
 
 
+class DemoQwenPawAdapter(BaseQwenPawAdapter):
+    """Run the local A/B/C modules as a complete demo multi-agent workflow."""
+
+    def run_workflow(self, payload: Mapping[str, Any]) -> Dict[str, Any]:
+        raw_alarms = payload.get("raw_alarms") or generate_demo_alarms()
+        structured_alarms = preprocess_alarms(raw_alarms)
+        skill_match = match_skills(
+            structured_alarms,
+            features=payload.get("features"),
+            rules=payload.get("rules"),
+        )
+        expression_result = evaluate_rules(skill_match)
+
+        outputs: Dict[str, Any] = {
+            "raw_alarms": raw_alarms,
+            "structured_alarms": structured_alarms,
+            "skill_match": skill_match,
+            "expression_result": expression_result,
+        }
+
+        agent_steps = [
+            AgentRunResult(
+                agent=spec.name,
+                module=spec.module,
+                status="completed",
+                output_key=spec.output_key,
+                output_count=_count_output(outputs.get(spec.output_key)),
+                message=spec.description,
+            ).to_dict()
+            for spec in WORKFLOW
+            if spec.output_key != "event_result"
+        ]
+
+        return {
+            "mode": "demo",
+            "workflow": [asdict(spec) for spec in WORKFLOW],
+            "agent_steps": agent_steps,
+            "outputs": outputs,
+        }
+
+
 class RealQwenPawAdapter(BaseQwenPawAdapter):
     """Placeholder for the real QwenPaw SDK/runtime integration."""
 
@@ -74,6 +120,8 @@ class RealQwenPawAdapter(BaseQwenPawAdapter):
 def create_qwenpaw_adapter(mode: str = "mock") -> BaseQwenPawAdapter:
     if mode == "mock":
         return MockQwenPawAdapter()
+    if mode == "demo":
+        return DemoQwenPawAdapter()
     if mode == "real":
         return RealQwenPawAdapter()
     raise ValueError(f"Unsupported QwenPaw adapter mode: {mode}")

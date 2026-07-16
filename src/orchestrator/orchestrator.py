@@ -37,7 +37,7 @@ def run_pipeline(payload: Mapping[str, Any], adapter_mode: str = "mock") -> Dict
 
     return {
         "task_id": payload.get("task_id", "TASK-UNKNOWN"),
-        "dataset_id": payload.get("dataset_id", expression_result.get("dataset_id", "")),
+        "dataset_id": expression_result.get("dataset_id") or payload.get("dataset_id", ""),
         "status": "completed",
         "adapter_mode": workflow_result["mode"],
         "workflow": workflow_result["workflow"],
@@ -68,6 +68,14 @@ def load_json(path: Path) -> Dict[str, Any]:
         return json.load(file)
 
 
+def load_sample_payload(sample_dir: Path) -> Dict[str, Any]:
+    return {
+        "raw_alarms": load_json(sample_dir / "alarms.json"),
+        "features": load_json(sample_dir / "features.json"),
+        "rules": load_json(sample_dir / "rules.json"),
+    }
+
+
 def save_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:
@@ -89,13 +97,23 @@ def main() -> None:
     )
     parser.add_argument(
         "--adapter",
-        choices=["mock", "real"],
-        default="mock",
-        help="QwenPaw adapter mode. Use mock before the real QwenPaw SDK is wired.",
+        choices=["mock", "demo", "real"],
+        default="demo",
+        help="QwenPaw adapter mode. Use demo to run local A/B/C modules.",
+    )
+    parser.add_argument(
+        "--sample-dir",
+        default="",
+        help="Optional local directory containing alarms.json, features.json and rules.json. Files are read locally and should not be committed.",
     )
     args = parser.parse_args()
 
-    result = run_pipeline(load_json(Path(args.mock)), adapter_mode=args.adapter)
+    payload = load_json(Path(args.mock))
+    if args.sample_dir:
+        payload.update(load_sample_payload(Path(args.sample_dir)))
+        payload["dataset_id"] = Path(args.sample_dir).name
+
+    result = run_pipeline(payload, adapter_mode=args.adapter)
     if args.output:
         save_json(Path(args.output), result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
