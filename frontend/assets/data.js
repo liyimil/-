@@ -2,7 +2,7 @@ window.APP_DATA = {
   taskId: "TASK-MOCK-0001",
   datasetId: "demo-dataset",
   status: "completed",
-  adapterMode: "demo",
+  adapterMode: "real",
   metrics: {
     alarmCount: 3,
     ruleResultCount: 2,
