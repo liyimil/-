@@ -11,6 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.event_generator import generate_events
 from src.orchestrator.qwenpaw_adapter import append_event_step, create_qwenpaw_adapter
+from src.orchestrator.qwenpaw_runtime import QwenPawRuntimeUnavailable
 
 
 def run_pipeline(payload: Mapping[str, Any], adapter_mode: str = "mock") -> Dict[str, Any]:
@@ -40,6 +41,7 @@ def run_pipeline(payload: Mapping[str, Any], adapter_mode: str = "mock") -> Dict
         "dataset_id": expression_result.get("dataset_id") or payload.get("dataset_id", ""),
         "status": "completed",
         "adapter_mode": workflow_result["mode"],
+        "runtime": workflow_result.get("runtime", {}),
         "workflow": workflow_result["workflow"],
         "agent_steps": agent_steps,
         "inputs": {
@@ -113,7 +115,11 @@ def main() -> None:
         payload.update(load_sample_payload(Path(args.sample_dir)))
         payload["dataset_id"] = Path(args.sample_dir).name
 
-    result = run_pipeline(payload, adapter_mode=args.adapter)
+    try:
+        result = run_pipeline(payload, adapter_mode=args.adapter)
+    except QwenPawRuntimeUnavailable as exc:
+        print(f"QwenPaw runtime unavailable: {exc}", file=sys.stderr)
+        raise SystemExit(2) from exc
     if args.output:
         save_json(Path(args.output), result)
     print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -76,7 +76,7 @@ docs/                 项目文档
 python src/orchestrator/orchestrator.py --adapter demo
 ```
 
-该命令会通过 `DemoQwenPawAdapter` 串联本地 A/B/C/D 模块，并输出标准事件结果。`--adapter mock` 保留给 D 模块单独调试，`--adapter real` 预留给后续真实 QwenPaw 框架接入。
+该命令会通过 `DemoQwenPawAdapter` 串联本地 A/B/C/D 模块，并输出标准事件结果。`--adapter mock` 保留给 D 模块单独调试，`--adapter real` 会走官方 QwenPaw runtime adapter。
 
 如果本地存在企业样例目录，可在不提交数据的前提下验证全量规则：
 
@@ -85,6 +85,15 @@ python src/orchestrator/orchestrator.py --adapter demo --sample-dir data/samples
 ```
 
 该模式会读取本地 `alarms.json`、`features.json`、`rules.json`，并对 `rules.json` 中的规则批量生成 `rule_results`。
+
+真实 QwenPaw runtime 接入：
+
+```bash
+python -m pip install qwenpaw
+python src/orchestrator/orchestrator.py --adapter real
+```
+
+如果本地未安装官方 `qwenpaw` 包，`real` 模式会明确提示 `QwenPaw runtime unavailable`，不会把 demo 流程冒充真实接入。
 
 前端入口：
 

@@ -6,6 +6,7 @@ from src.expression_engine import evaluate_rules
 from src.perception_agent import preprocess_alarms
 from src.skill_engine import match_skills
 
+from .qwenpaw_runtime import QwenPawRuntimeBridge
 from .workflow_config import AgentSpec, WORKFLOW
 
 
@@ -105,16 +106,46 @@ class DemoQwenPawAdapter(BaseQwenPawAdapter):
 
 
 class RealQwenPawAdapter(BaseQwenPawAdapter):
-    """Placeholder for the real QwenPaw SDK/runtime integration."""
+    """Run the workflow through the official QwenPaw runtime bridge."""
 
-    def __init__(self, client: Any = None) -> None:
-        self.client = client
+    def __init__(self, runtime: QwenPawRuntimeBridge | None = None) -> None:
+        self.runtime = runtime
 
     def run_workflow(self, payload: Mapping[str, Any]) -> Dict[str, Any]:
-        raise NotImplementedError(
-            "Real QwenPaw integration is not wired yet. Keep orchestrator stable and "
-            "implement QwenPaw agent calls inside RealQwenPawAdapter.run_workflow()."
+        runtime = self.runtime or QwenPawRuntimeBridge.from_environment()
+
+        raw_alarms = payload.get("raw_alarms") or generate_demo_alarms()
+        structured_alarms = preprocess_alarms(raw_alarms)
+        skill_match = match_skills(
+            structured_alarms,
+            features=payload.get("features"),
+            rules=payload.get("rules"),
         )
+        expression_result = evaluate_rules(skill_match)
+
+        outputs: Dict[str, Any] = {
+            "raw_alarms": raw_alarms,
+            "structured_alarms": structured_alarms,
+            "skill_match": skill_match,
+            "expression_result": expression_result,
+        }
+
+        agent_steps = [
+            runtime.build_step(spec, outputs.get(spec.output_key), _count_output(outputs.get(spec.output_key)))
+            for spec in WORKFLOW
+            if spec.output_key != "event_result"
+        ]
+
+        return {
+            "mode": "real",
+            "runtime": {
+                "package": runtime.info.package,
+                "version": runtime.info.version,
+            },
+            "workflow": [asdict(spec) for spec in WORKFLOW],
+            "agent_steps": agent_steps,
+            "outputs": outputs,
+        }
 
 
 def create_qwenpaw_adapter(mode: str = "mock") -> BaseQwenPawAdapter:

@@ -1,8 +1,16 @@
 import unittest
+from importlib import metadata
+from unittest.mock import patch
 
 from src.alarm_generator import generate_demo_alarms
 from src.expression_engine import evaluate_expression, evaluate_rules
 from src.orchestrator import run_pipeline
+from src.orchestrator.qwenpaw_adapter import RealQwenPawAdapter
+from src.orchestrator.qwenpaw_runtime import (
+    QwenPawRuntimeBridge,
+    QwenPawRuntimeInfo,
+    QwenPawRuntimeUnavailable,
+)
 from src.perception_agent import preprocess_alarms
 from src.skill_engine import match_skills
 
@@ -104,6 +112,24 @@ class DemoPipelineTest(unittest.TestCase):
         self.assertEqual(result["event_stats"]["event_count"], 1)
         self.assertEqual(result["events"][0]["source_rule_id"], "5")
         self.assertIn("线路故障", result["events"][0]["output_text"])
+
+    def test_real_adapter_requires_qwenpaw_package(self):
+        with patch(
+            "src.orchestrator.qwenpaw_runtime.metadata.version",
+            side_effect=metadata.PackageNotFoundError("qwenpaw"),
+        ):
+            with self.assertRaises(QwenPawRuntimeUnavailable):
+                RealQwenPawAdapter().run_workflow({})
+
+    def test_real_adapter_runs_with_qwenpaw_runtime_bridge(self):
+        runtime = QwenPawRuntimeBridge(QwenPawRuntimeInfo(package="qwenpaw", version="test-version"))
+        result = RealQwenPawAdapter(runtime=runtime).run_workflow({})
+
+        self.assertEqual(result["mode"], "real")
+        self.assertEqual(result["runtime"]["package"], "qwenpaw")
+        self.assertEqual(result["runtime"]["version"], "test-version")
+        self.assertEqual(result["agent_steps"][0]["runtime"], "qwenpaw")
+        self.assertEqual(len(result["outputs"]["expression_result"]["rule_results"]), 2)
 
 
 if __name__ == "__main__":

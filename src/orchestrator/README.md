@@ -5,14 +5,15 @@
 ## 负责范围
 
 - 串联 A/B/C/D 的输入输出。
-- 使用 adapter 层屏蔽不同运行来源：`demo` 串联本地 A/B/C/D，`mock` 用于 D 单模块调试，`real` 预留给真实 QwenPaw。
+- 使用 adapter 层屏蔽不同运行来源：`demo` 串联本地 A/B/C/D，`mock` 用于 D 单模块调试，`real` 接入官方 QwenPaw runtime。
 - 调用 `src/event_generator/event_generator.py` 生成标准事件。
 - 汇总 `agent_steps`、输入统计、事件统计和前端展示数据。
 
 ## 当前文件
 
 - `orchestrator.py`：编排入口和命令行运行脚本。
-- `qwenpaw_adapter.py`：QwenPaw 适配层，当前提供 demo/mock/real 三种模式，后续真实框架接入时只改这里。
+- `qwenpaw_adapter.py`：QwenPaw 适配层，当前提供 demo/mock/real 三种模式。
+- `qwenpaw_runtime.py`：官方 QwenPaw runtime 检测与执行桥接。
 - `workflow_config.py`：A/B/C/D 多智能体流程配置。
 - `__init__.py`：导出 `run_pipeline`。
 
@@ -42,13 +43,19 @@ python src/orchestrator/orchestrator.py --adapter demo --sample-dir data/samples
 
 该命令只读取本地 ignored 数据，不会把样例提交到仓库。
 
-后续真实 QwenPaw 接入时，目标命令形态如下：
+真实 QwenPaw 接入命令如下：
 
 ```bash
 python src/orchestrator/orchestrator.py --adapter real
 ```
 
-真实调用逻辑集中写在 `qwenpaw_adapter.py` 的 `RealQwenPawAdapter`，不要散落到 `orchestrator.py`。
+`real` 模式要求本地已安装官方包：
+
+```bash
+python -m pip install qwenpaw
+```
+
+如果未安装，命令会给出 `QwenPaw runtime unavailable`，不会把 demo 冒充真实接入。真实调用逻辑集中写在 `qwenpaw_adapter.py` 的 `RealQwenPawAdapter` 和 `qwenpaw_runtime.py`，不要散落到 `orchestrator.py`。
 
 ## 等 A/B/C 接入时怎么改
 
