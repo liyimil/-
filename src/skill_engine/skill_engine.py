@@ -3,9 +3,11 @@ SKILL 规则管理与智能匹配引擎 —— 课题 B：skill_engine。
 
 职责：
 1. 加载 features.json / rules.json（或接受外部传入）
-2. 将 A 模块输出的结构化告警与 feature 内部的 signal_mappings 做运行时语义匹配
-3. 输出 signal_mapping_states（双层 @n 索引）
-4. 输出候选 Feature SKILL / Rule SKILL
+2. 生成 Feature SKILL .md 文件 → skills/features/
+3. 生成 Rule SKILL .md 文件 → skills/event_rules/
+4. 将 A 模块输出的结构化告警与 feature 内部的 signal_mappings 做运行时语义匹配
+5. 输出 signal_mapping_states（双层 @n 索引）
+6. 输出候选 Feature SKILL / Rule SKILL
 
 两层 @n 映射关系（已确认）：
 - rule.expression 中的 @n  → features.json 中 feature_id=@n 的全局特征
@@ -583,6 +585,238 @@ def _is_enabled(rule: Dict[str, Any]) -> bool:
 
 
 # ===================================================================
+# SKILL 文件生成器
+# ===================================================================
+
+
+def generate_skill_files(
+    features_data: Mapping[str, Any],
+    rules_data: Mapping[str, Any],
+    skills_dir: Optional[Path] = None,
+) -> Tuple[int, int]:
+    """从 features.json / rules.json 批量生成 SKILL .md 文件。
+
+    Args:
+        features_data: features.json 的完整内容
+        rules_data: rules.json 的完整内容
+        skills_dir: skills/ 目录路径，默认 PROJECT_ROOT/skills/
+
+    Returns:
+        (已生成的 Feature SKILL 数量, 已生成的 Rule SKILL 数量)
+    """
+    if skills_dir is None:
+        skills_dir = PROJECT_ROOT / "skills"
+
+    features_dir = skills_dir / "features"
+    rules_dir = skills_dir / "event_rules"
+    features_dir.mkdir(parents=True, exist_ok=True)
+    rules_dir.mkdir(parents=True, exist_ok=True)
+
+    feature_count = 0
+    rule_count = 0
+
+    # ── 生成 Feature SKILL ──
+    for feature in features_data.get("features", []):
+        feature_id = str(feature.get("feature_id", ""))
+        if not feature_id:
+            continue
+        padded_id = feature_id.lstrip("@").zfill(3)
+        skill_path = features_dir / f"FEATURE_{padded_id}.md"
+        content = _build_feature_skill_md(feature, padded_id)
+        skill_path.write_text(content, encoding="utf-8")
+        feature_count += 1
+
+    # ── 生成 Rule SKILL ──
+    for rule in rules_data.get("rules", []):
+        rule_id = str(rule.get("rule_id", ""))
+        if not rule_id:
+            continue
+        padded_id = rule_id.zfill(4)
+        skill_path = rules_dir / f"RULE_{padded_id}.md"
+        # 保留已有的手工编写文件（如 RULE_0005_LINE_FAULT_REMOTE_CLOSE.md）
+        # 只覆盖自动生成的同名文件
+        content = _build_rule_skill_md(rule, padded_id)
+        skill_path.write_text(content, encoding="utf-8")
+        rule_count += 1
+
+    return feature_count, rule_count
+
+
+def _build_feature_skill_md(feature: Dict[str, Any], padded_id: str) -> str:
+    """构建单个 Feature SKILL 的 Markdown 内容。"""
+    feature_id = feature.get("feature_id", "")
+    feature_name = feature.get("feature_name", "")
+    expression = feature.get("expression", "")
+    scope = feature.get("scope", "")
+    valid_time = feature.get("valid_time", 0)
+    priority = feature.get("priority", 0)
+
+    # signal_mappings 表格
+    mappings_table = _build_signal_mappings_table(feature.get("signal_mappings", []))
+
+    # 自动生成解释
+    explanation = _build_feature_explanation(feature)
+
+    return f"""# FEATURE SKILL: {feature_name}
+
+## metadata
+
+- skill_id: FEATURE_{padded_id}
+- source_feature_id: {feature_id}
+- type: feature
+- scope: {scope}
+- valid_time: {valid_time}
+- priority: {priority}
+
+## source
+
+- source_file: features.json
+
+## expression
+
+```text
+{expression}
+```
+
+## signal_mappings
+
+{mappings_table}
+
+说明：这里的 `@N` 是该 Feature SKILL 内部的局部 signal_mapping 索引，对应该 feature 的 `signal_mappings.index=@N`。
+
+## explanation
+
+{explanation}
+"""
+
+
+def _build_rule_skill_md(rule: Dict[str, Any], padded_id: str) -> str:
+    """构建单个 Rule SKILL 的 Markdown 内容。"""
+    rule_id = rule.get("rule_id", "")
+    rule_name = rule.get("rule_name", "")
+    expression = rule.get("expression", "")
+    event_level = rule.get("event_level", "")
+    event_type = rule.get("event_type", "")
+    valid_time = rule.get("valid_time", 0)
+    sub_type = rule.get("sub_type", "")
+    run_mode = rule.get("run_mode", "")
+    enabled = rule.get("enabled", True)
+    output_format = rule.get("output_format", "")
+
+    # 提取表达式中的特征引用
+    feature_refs = re.findall(r"@\w+", expression)
+    refs_str = "、".join(feature_refs) if feature_refs else "无"
+
+    # 自动生成解释
+    explanation = _build_rule_explanation(rule, feature_refs)
+
+    return f"""# RULE SKILL: {rule_name}
+
+## metadata
+
+- skill_id: RULE_{padded_id}
+- source_rule_id: "{rule_id}"
+- type: event_rule
+- event_level: {event_level}
+- event_type: {event_type}
+- valid_time: {valid_time}
+- sub_type: {sub_type}
+- run_mode: {run_mode}
+- enabled: {str(enabled).lower()}
+
+## source
+
+- source_file: rules.json
+
+## expression
+
+```text
+{expression}
+```
+
+说明：表达式中的 `@N` 对应 `features.json` 中 `feature_id=@N` 的特征。
+
+## feature_mapping
+
+本规则引用的特征：{refs_str}
+
+规则含义按表达式逻辑运算符（`|` 或、`&` 且、`!` 非）解释。
+
+## output_format
+
+```text
+{output_format}
+```
+
+## explanation
+
+{explanation}
+"""
+
+
+def _build_signal_mappings_table(mappings: List[Dict[str, Any]]) -> str:
+    """构建 signal_mappings 的 Markdown 表格。"""
+    if not mappings:
+        return "（无 signal_mapping 定义）\n"
+
+    headers = ["index", "object_type", "device_name", "object_name", "signal_feature", "feature_desc"]
+    lines = ["| " + " | ".join(headers) + " |"]
+    lines.append("|" + "|".join(["---"] * len(headers)) + "|")
+
+    for m in mappings:
+        row = [
+            str(m.get("index", "")),
+            str(m.get("object_type", "")),
+            str(m.get("device_name", "")),
+            str(m.get("object_name", "")),
+            str(m.get("signal_feature", "")),
+            str(m.get("feature_desc", "")),
+        ]
+        lines.append("| " + " | ".join(row) + " |")
+
+    return "\n".join(lines)
+
+
+def _build_feature_explanation(feature: Dict[str, Any]) -> str:
+    """自动生成特征含义解释。"""
+    feature_name = feature.get("feature_name", "")
+    scope = feature.get("scope", "")
+    mappings = feature.get("signal_mappings", [])
+
+    parts = [f"该特征用于识别「{feature_name}」场景。"]
+
+    if scope:
+        parts.append(f"作用域为「{scope}」。")
+
+    if mappings:
+        objects = [m.get("object_name", "") for m in mappings if m.get("object_name")]
+        if objects:
+            parts.append(f"当告警信号涉及以下对象时触发：{'、'.join(objects)}。")
+
+    return "\n\n".join(parts)
+
+
+def _build_rule_explanation(
+    rule: Dict[str, Any], feature_refs: List[str]
+) -> str:
+    """自动生成规则含义解释。"""
+    rule_name = rule.get("rule_name", "")
+    event_level = rule.get("event_level", "")
+    event_type = rule.get("event_type", "")
+
+    parts = [f"该规则用于识别「{rule_name}」事件。"]
+
+    if event_type:
+        parts.append(f"事件类型为「{event_type}」。")
+    if event_level:
+        parts.append(f"事件等级为「{event_level}」。")
+    if feature_refs:
+        parts.append(f"依赖特征：{'、'.join(feature_refs)}。")
+
+    return "\n\n".join(parts)
+
+
+# ===================================================================
 # CLI 入口
 # ===================================================================
 
@@ -621,11 +855,32 @@ def main() -> None:
         ),
         help="输出 skill_match.json 路径",
     )
+    parser.add_argument(
+        "--generate-skills",
+        action="store_true",
+        help="从 features.json / rules.json 批量生成 SKILL .md 文件到 skills/ 目录",
+    )
     args = parser.parse_args()
 
-    input_path = Path(args.input)
     features_path = Path(args.features)
     rules_path = Path(args.rules)
+
+    # ── 模式 1：仅生成 SKILL 文件 ──
+    if args.generate_skills:
+        print(f"[skill_engine] 加载 features: {features_path}")
+        features_data = load_json(features_path)
+        print(f"[skill_engine] 加载 rules: {rules_path}")
+        rules_data = load_json(rules_path)
+
+        fc, rc = generate_skill_files(features_data, rules_data)
+        print(
+            f"[skill_engine] SKILL 文件生成完成: "
+            f"{fc} 个 Feature SKILL → skills/features/, "
+            f"{rc} 个 Rule SKILL → skills/event_rules/"
+        )
+        return
+
+    input_path = Path(args.input)
     output_path = Path(args.output)
 
     print(f"[skill_engine] 读取 A 输出: {input_path}")
