@@ -3,7 +3,7 @@ from importlib import metadata
 from unittest.mock import patch
 
 from src.alarm_generator import generate_demo_alarms
-from src.expression_engine import evaluate_expression, evaluate_rules
+from src.expression_engine import DEMO_FEATURES, DEMO_RULES, evaluate_expression, evaluate_rules
 from src.orchestrator import run_pipeline
 from src.orchestrator.qwenpaw_adapter import RealQwenPawAdapter
 from src.orchestrator.qwenpaw_runtime import (
@@ -30,7 +30,7 @@ class DemoPipelineTest(unittest.TestCase):
     def test_a_b_c_modules_produce_rule_results(self):
         raw = generate_demo_alarms()
         structured = preprocess_alarms(raw)
-        skill_match = match_skills(structured)
+        skill_match = match_skills(structured, features=DEMO_FEATURES, rules=DEMO_RULES)
         expression_result = evaluate_rules(skill_match)
 
         self.assertEqual(len(structured["alarms"]), 3)

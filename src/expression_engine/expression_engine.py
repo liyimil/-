@@ -1,7 +1,107 @@
 import re
-from typing import Any, Dict, List, Mapping, Tuple
+from typing import Any, Dict, List, Mapping
 
-from src.skill_engine import DEMO_FEATURES, DEMO_RULES
+DEMO_FEATURES: List[Dict[str, Any]] = [
+    {
+        "feature_id": "@1",
+        "feature_name": "线路保护A网中断",
+        "expression": "@1=1",
+        "signal_mappings": [
+            {
+                "index": "@1",
+                "keywords": ["保护", "A网中断", "动作"],
+                "object_name": "A网中断",
+                "feature_desc": "线路保护A网中断动作",
+            }
+        ],
+    },
+    {
+        "feature_id": "@2",
+        "feature_name": "线路保护B网中断",
+        "expression": "@1=1",
+        "signal_mappings": [
+            {
+                "index": "@1",
+                "keywords": ["保护", "B网中断", "动作"],
+                "object_name": "B网中断",
+                "feature_desc": "线路保护B网中断动作",
+            }
+        ],
+    },
+    {
+        "feature_id": "@3",
+        "feature_name": "保护异常确认",
+        "expression": "@1=1",
+        "signal_mappings": [
+            {
+                "index": "@1",
+                "keywords": ["保护", "中断"],
+                "object_name": "保护",
+                "feature_desc": "保护通信异常确认",
+            }
+        ],
+    },
+    {
+        "feature_id": "@4",
+        "feature_name": "开关分闸",
+        "expression": "@1=1",
+        "signal_mappings": [
+            {
+                "index": "@1",
+                "keywords": ["开关", "分闸"],
+                "object_name": "分闸",
+                "feature_desc": "开关分闸动作",
+            }
+        ],
+    },
+    {
+        "feature_id": "@5",
+        "feature_name": "开关合闸",
+        "expression": "@1=1",
+        "signal_mappings": [
+            {
+                "index": "@1",
+                "keywords": ["开关", "合闸"],
+                "object_name": "合闸",
+                "feature_desc": "开关合闸动作",
+            }
+        ],
+    },
+    {
+        "feature_id": "@6",
+        "feature_name": "远方操作确认",
+        "expression": "@1=1",
+        "signal_mappings": [
+            {
+                "index": "@1",
+                "keywords": ["远方", "操作"],
+                "object_name": "远方操作",
+                "feature_desc": "远方操作确认",
+            }
+        ],
+    },
+]
+
+DEMO_RULES: List[Dict[str, Any]] = [
+    {
+        "rule_id": "5",
+        "rule_name": "[精准]20kV线路故障（远方手合）",
+        "expression": "(@1|@2)&@3&(@4|@5|@6)",
+        "event_level": "事故",
+        "event_type": "2-跳闸事件",
+        "output_format": "$LINE 线路故障（远方手合）",
+        "enabled": True,
+    },
+    {
+        "rule_id": "902",
+        "rule_name": "[基础]开关合上",
+        "expression": "(@6)",
+        "event_level": "告知",
+        "event_type": "6-一般告知",
+        "output_format": "$BAY 开关投入运行",
+        "enabled": True,
+    },
+]
 
 
 TOKEN_PATTERN = re.compile(r"@\w+|[()&|!]|=|[01]")

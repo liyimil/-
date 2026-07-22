@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Mapping
 
 from src.alarm_generator import generate_demo_alarms
-from src.expression_engine import evaluate_rules
+from src.expression_engine import DEMO_FEATURES, DEMO_RULES, evaluate_rules
 from src.perception_agent import preprocess_alarms
 from src.skill_engine import match_skills
 
@@ -72,8 +72,8 @@ class DemoQwenPawAdapter(BaseQwenPawAdapter):
         structured_alarms = preprocess_alarms(raw_alarms)
         skill_match = match_skills(
             structured_alarms,
-            features=payload.get("features"),
-            rules=payload.get("rules"),
+            features=payload.get("features") or DEMO_FEATURES,
+            rules=payload.get("rules") or DEMO_RULES,
         )
         expression_result = evaluate_rules(skill_match)
 
@@ -118,8 +118,8 @@ class RealQwenPawAdapter(BaseQwenPawAdapter):
         structured_alarms = preprocess_alarms(raw_alarms)
         skill_match = match_skills(
             structured_alarms,
-            features=payload.get("features"),
-            rules=payload.get("rules"),
+            features=payload.get("features") or DEMO_FEATURES,
+            rules=payload.get("rules") or DEMO_RULES,
         )
         expression_result = evaluate_rules(skill_match)
 
