@@ -4,21 +4,27 @@
 
 ## 页面结构
 
-- `index.html`：总览看板。
-- `workflow.html`：A/B/C/D 多智能体编排流程。
-- `events.html`：标准事件中心。
-- `rules.html`：规则判定与表达式结果。
-- `alarms.html`：结构化告警流。
-- `assets/app.css`：公共样式。
-- `assets/app.js`：公共交互逻辑。
-- `assets/data.js`：演示数据。
+- `index.html`：告警事件分析总览
+- `workflow.html`：多智能体处理流程
+- `events.html`：标准事件中心
+- `rules.html`：规则判定结果
+- `alarms.html`：结构化告警流
+- `assets/app.css`：公共样式
+- `assets/app.js`：页面交互与接口请求
+- `assets/data.js`：离线兜底数据
 
-## 使用方式
+## 运行方式
 
-直接用浏览器打开：
+推荐通过本地联调服务访问：
 
-```text
-frontend/index.html
+```bash
+python src/web_server/server.py --adapter real --sample-dir data/samples/samples-md --port 8000
 ```
 
-当前页面先使用内置 DEMO 数据演示，包含页面跳转、流程节点联动、事件详情展开、规则筛选、告警搜索和跨页面跳转。后续如果接后端接口，可以把 `assets/data.js` 替换成接口返回的 `frontend_data` 映射结果。
+然后打开：
+
+```text
+http://127.0.0.1:8000
+```
+
+前端会优先读取 `/api/dashboard` 获取最新分析结果；点击“刷新分析”会调用 `/api/run` 重新执行编排流程。若未启动服务，页面会使用 `assets/data.js` 作为离线展示数据。

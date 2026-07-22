@@ -126,3 +126,24 @@ frontend/index.html
 2. `docs/02_项目实施计划_SKILL告警分析.md`
 
 `skills/event_rules/RULE_0005_LINE_FAULT_REMOTE_CLOSE.md` 仅作为 Rule SKILL 示例。实际实现目标是处理 `rules.json` 中的全量规则。
+## 前后端联调运行方式
+
+启动本地联调服务：
+
+```bash
+python src/web_server/server.py --adapter real --sample-dir data/samples/samples-md --port 8000
+```
+
+浏览器访问：
+
+```text
+http://127.0.0.1:8000
+```
+
+该服务会同时提供前端静态页面和后端接口：
+
+- `GET /api/dashboard`：读取最近一次编排结果；首次访问会自动运行 A/B/C/D 链路。
+- `POST /api/run`：重新执行 QwenPaw 编排链路，并返回最新看板数据。
+- `GET /api/health`：检查服务是否启动。
+
+前端页面启动时会优先请求 `/api/dashboard`；如果没有启动服务，则回退到 `frontend/assets/data.js` 中的静态兜底数据。企业样本目录 `data/samples/samples-md` 只在本地读取，不提交到 GitHub。

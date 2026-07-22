@@ -13,6 +13,7 @@ from src.orchestrator.qwenpaw_runtime import (
 )
 from src.perception_agent import preprocess_alarms
 from src.skill_engine import match_skills
+from src.web_server.server import to_frontend_data
 
 
 class DemoPipelineTest(unittest.TestCase):
@@ -130,6 +131,17 @@ class DemoPipelineTest(unittest.TestCase):
         self.assertEqual(result["runtime"]["version"], "test-version")
         self.assertEqual(result["agent_steps"][0]["runtime"], "qwenpaw")
         self.assertEqual(len(result["outputs"]["expression_result"]["rule_results"]), 2)
+
+    def test_orchestrator_result_can_feed_frontend_dashboard(self):
+        result = run_pipeline({"task_id": "TEST-TASK"}, adapter_mode="demo")
+        frontend_data = to_frontend_data(result)
+
+        self.assertEqual(frontend_data["taskId"], "TEST-TASK")
+        self.assertEqual(frontend_data["adapterMode"], "demo")
+        self.assertEqual(frontend_data["metrics"]["eventCount"], 1)
+        self.assertEqual(frontend_data["events"][0]["eventId"], "EVT-0001")
+        self.assertIn("sourceRuleId", frontend_data["rules"][0])
+        self.assertIn("alarmId", frontend_data["alarms"][0])
 
 
 if __name__ == "__main__":
