@@ -76,7 +76,7 @@ docs/                 项目文档
 python src/orchestrator/orchestrator.py --adapter demo
 ```
 
-该命令会通过 `DemoQwenPawAdapter` 串联本地 A/B/C/D 模块，并输出标准事件结果。`--adapter mock` 保留给 D 模块单独调试，`--adapter real` 会走官方 QwenPaw runtime adapter。
+该命令会通过 `DemoQwenPawAdapter` 串联本地 A/B/C/D 模块，并输出标准事件结果。`--adapter mock` 保留给 D 模块单独调试，`--adapter real` 会创建 `QwenPawAgent`，将 A/B/C 注册为 Agent 工具并由 Agent 触发调用。
 
 如果本地存在企业样例目录，可在不提交数据的前提下验证全量规则：
 
@@ -93,7 +93,7 @@ python -m pip install qwenpaw
 python src/orchestrator/orchestrator.py --adapter real
 ```
 
-如果本地未安装官方 `qwenpaw` 包，`real` 模式会明确提示 `QwenPaw runtime unavailable`，不会把 demo 流程冒充真实接入。
+如果本地未安装官方 `qwenpaw` 包，或没有配置 QwenPaw active model，`real` 模式会明确提示 `QwenPaw runtime unavailable`，不会把 demo 流程冒充真实接入。
 
 前端入口：
 
@@ -132,6 +132,12 @@ frontend/index.html
 
 ```bash
 python src/web_server/server.py --adapter real --sample-dir data/samples/samples-md --port 8000
+```
+
+`--adapter real` 会使用 QwenPaw Agent 通过工具调用方式执行 A/B/C 主流程，要求本机已安装并配置 QwenPaw active model。若本机尚未配置模型，可先使用离线可运行模式：
+
+```bash
+python src/web_server/server.py --adapter demo --sample-dir data/samples/samples-md --port 8000
 ```
 
 浏览器访问：

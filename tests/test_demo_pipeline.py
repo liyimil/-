@@ -16,6 +16,17 @@ from src.skill_engine import match_skills
 from src.web_server.server import to_frontend_data
 
 
+class FakeQwenPawRunner:
+    def __init__(self):
+        self.called_tools = []
+
+    def run_workflow(self, tool_functions, payload_summary):
+        for name in ("run_perception_agent", "run_skill_engine", "run_expression_engine"):
+            self.called_tools.append(name)
+            tool_functions[name]()
+        return {"status": "completed", "response": "fake qwenpaw agent completed workflow"}
+
+
 class DemoPipelineTest(unittest.TestCase):
     def test_expression_engine_supports_boolean_operations(self):
         states = {"@1": True, "@2": False, "@3": True, "@4": False}
@@ -123,12 +134,21 @@ class DemoPipelineTest(unittest.TestCase):
                 RealQwenPawAdapter().run_workflow({})
 
     def test_real_adapter_runs_with_qwenpaw_runtime_bridge(self):
-        runtime = QwenPawRuntimeBridge(QwenPawRuntimeInfo(package="qwenpaw", version="test-version"))
+        runner = FakeQwenPawRunner()
+        runtime = QwenPawRuntimeBridge(
+            QwenPawRuntimeInfo(package="qwenpaw", version="test-version"),
+            runner=runner,
+        )
         result = RealQwenPawAdapter(runtime=runtime).run_workflow({})
 
         self.assertEqual(result["mode"], "real")
         self.assertEqual(result["runtime"]["package"], "qwenpaw")
         self.assertEqual(result["runtime"]["version"], "test-version")
+        self.assertEqual(result["runtime"]["agent"], "QwenPawAgent")
+        self.assertEqual(
+            runner.called_tools,
+            ["run_perception_agent", "run_skill_engine", "run_expression_engine"],
+        )
         self.assertEqual(result["agent_steps"][0]["runtime"], "qwenpaw")
         self.assertEqual(len(result["outputs"]["expression_result"]["rule_results"]), 2)
 

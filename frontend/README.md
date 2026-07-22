@@ -15,10 +15,16 @@
 
 ## 运行方式
 
-推荐通过本地联调服务访问：
+如果本机已经配置 QwenPaw 模型，使用真实 Agent 编排模式：
 
 ```bash
 python src/web_server/server.py --adapter real --sample-dir data/samples/samples-md --port 8000
+```
+
+如果只是本地演示，或尚未配置 QwenPaw 模型，使用离线可运行模式：
+
+```bash
+python src/web_server/server.py --adapter demo --sample-dir data/samples/samples-md --port 8000
 ```
 
 然后打开：

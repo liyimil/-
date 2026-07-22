@@ -106,7 +106,7 @@ class DemoQwenPawAdapter(BaseQwenPawAdapter):
 
 
 class RealQwenPawAdapter(BaseQwenPawAdapter):
-    """Run the workflow through the official QwenPaw runtime bridge."""
+    """Run A/B/C through QwenPaw Agent tool calls."""
 
     def __init__(self, runtime: QwenPawRuntimeBridge | None = None) -> None:
         self.runtime = runtime
@@ -115,32 +115,74 @@ class RealQwenPawAdapter(BaseQwenPawAdapter):
         runtime = self.runtime or QwenPawRuntimeBridge.from_environment()
 
         raw_alarms = payload.get("raw_alarms") or generate_demo_alarms()
-        structured_alarms = preprocess_alarms(raw_alarms)
-        skill_match = match_skills(
-            structured_alarms,
-            features=payload.get("features") or DEMO_FEATURES,
-            rules=payload.get("rules") or DEMO_RULES,
-        )
-        expression_result = evaluate_rules(skill_match)
-
         outputs: Dict[str, Any] = {
             "raw_alarms": raw_alarms,
-            "structured_alarms": structured_alarms,
-            "skill_match": skill_match,
-            "expression_result": expression_result,
         }
 
-        agent_steps = [
-            runtime.build_step(spec, outputs.get(spec.output_key), _count_output(outputs.get(spec.output_key)))
-            for spec in WORKFLOW
-            if spec.output_key != "event_result"
+        def run_perception_agent() -> Mapping[str, Any]:
+            """A module: parse raw alarm payload into structured alarms."""
+            outputs["structured_alarms"] = preprocess_alarms(raw_alarms)
+            return _tool_summary("structured_alarms", outputs["structured_alarms"])
+
+        def run_skill_engine() -> Mapping[str, Any]:
+            """B module: match structured alarms against Feature/Rule SKILLs."""
+            structured_alarms = outputs.get("structured_alarms")
+            if not structured_alarms:
+                raise RuntimeError("run_perception_agent must be called before run_skill_engine.")
+            outputs["skill_match"] = match_skills(
+                structured_alarms,
+                features=payload.get("features") or DEMO_FEATURES,
+                rules=payload.get("rules") or DEMO_RULES,
+            )
+            return _tool_summary("skill_match", outputs["skill_match"])
+
+        def run_expression_engine() -> Mapping[str, Any]:
+            """C module: evaluate feature and event rule expressions."""
+            skill_match = outputs.get("skill_match")
+            if not skill_match:
+                raise RuntimeError("run_skill_engine must be called before run_expression_engine.")
+            outputs["expression_result"] = evaluate_rules(skill_match)
+            return _tool_summary("expression_result", outputs["expression_result"])
+
+        agent_decision = runtime.run_agent_workflow(
+            {
+                "run_perception_agent": run_perception_agent,
+                "run_skill_engine": run_skill_engine,
+                "run_expression_engine": run_expression_engine,
+            },
+            {
+                "alarm_count": _raw_alarm_count(raw_alarms),
+                "feature_count": _payload_count(payload.get("features"), "features"),
+                "rule_count": _payload_count(payload.get("rules"), "rules"),
+            },
+        )
+
+        missing_outputs = [
+            key for key in ("structured_alarms", "skill_match", "expression_result")
+            if key not in outputs
         ]
+        if missing_outputs:
+            raise RuntimeError(
+                "QwenPaw Agent did not complete required module calls: "
+                + ", ".join(missing_outputs)
+            )
+
+        agent_steps = []
+        for spec in WORKFLOW:
+            if spec.output_key == "event_result":
+                continue
+            output = outputs.get(spec.output_key)
+            step = runtime.build_step(spec, output, _count_output(output))
+            step["message"] = f"QwenPaw Agent invoked tool for {spec.module}: {spec.name}"
+            agent_steps.append(step)
 
         return {
             "mode": "real",
             "runtime": {
                 "package": runtime.info.package,
                 "version": runtime.info.version,
+                "agent": "QwenPawAgent",
+                "decision": agent_decision.get("response", ""),
             },
             "workflow": [asdict(spec) for spec in WORKFLOW],
             "agent_steps": agent_steps,
@@ -183,3 +225,28 @@ def _count_output(output: Any) -> int:
     if isinstance(output, list):
         return len(output)
     return 0 if output is None else 1
+
+
+def _tool_summary(output_key: str, output: Any) -> Dict[str, Any]:
+    return {
+        "output_key": output_key,
+        "output_count": _count_output(output),
+        "output_type": "mapping" if isinstance(output, Mapping) else type(output).__name__,
+        "status": "completed",
+    }
+
+
+def _payload_count(payload: Any, key: str) -> int:
+    if isinstance(payload, Mapping) and isinstance(payload.get(key), list):
+        return len(payload[key])
+    return 0
+
+
+def _raw_alarm_count(raw_alarms: Any) -> int:
+    if isinstance(raw_alarms, Mapping):
+        alarms = raw_alarms.get("alarms")
+        if isinstance(alarms, list):
+            return len(alarms)
+    if isinstance(raw_alarms, list):
+        return len(raw_alarms)
+    return 0
